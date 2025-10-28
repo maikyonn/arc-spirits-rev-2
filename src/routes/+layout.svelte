@@ -1,0 +1,288 @@
+<script lang="ts">
+	import '../app.css';
+	import favicon from '$lib/assets/favicon.svg';
+	import { page } from '$app/stores';
+	import { onMount, onDestroy, tick } from 'svelte';
+
+	const navItems = [
+		{ href: '/', label: 'Overview', icon: '🏠' },
+		{ href: '/origins', label: 'Origins', icon: '🌌' },
+		{ href: '/classes', label: 'Classes', icon: '🛡️' },
+	{ href: '/runes', label: 'Runes', icon: '🔮' },
+	{ href: '/dice-simulator', label: 'Dice Lab', icon: '🎲' },
+	{ href: '/hex-spirits', label: 'Hex Spirits', icon: '⚔️' },
+	{ href: '/class-analysis', label: 'Class Analysis', icon: '📊' },
+	{ href: '/artifacts', label: 'Artifacts', icon: '🧩' },
+	{ href: '/avatar-spirits', label: 'Avatar Spirits', icon: '🕯️' }
+] as const;
+
+	export let children;
+	let isNavOpen = false;
+	let navList: HTMLDivElement | null = null;
+	let navHeight = 0;
+	let viewportWidth = 0;
+
+	const measureNav = async () => {
+		await tick();
+		if (navList) {
+			navHeight = navList.scrollHeight;
+		}
+	};
+
+	const handleResize = () => {
+		viewportWidth = window.innerWidth;
+		if (viewportWidth >= 960) {
+			isNavOpen = true;
+		}
+		measureNav();
+	};
+
+	onMount(() => {
+		viewportWidth = window.innerWidth;
+		if (viewportWidth >= 960) {
+			isNavOpen = true;
+		}
+		measureNav();
+		window.addEventListener('resize', handleResize);
+	});
+
+	onDestroy(() => {
+		window.removeEventListener('resize', handleResize);
+	});
+
+	$: if (isNavOpen) {
+		measureNav();
+	}
+
+	$: pathname = $page.url.pathname;
+	$: activeHref = (() => {
+		const exact = navItems.find((item) => item.href === pathname);
+		if (exact) return exact.href;
+		const match = navItems.find((item) => pathname.startsWith(item.href) && item.href !== '/');
+		return match ? match.href : '/';
+	})();
+
+	function handleNavigate() {
+		if (viewportWidth < 960) {
+			isNavOpen = false;
+		}
+	}
+
+	function handleBackdropKey(event: KeyboardEvent) {
+		if (event.key === 'Escape' || event.key === 'Enter' || event.key === ' ') {
+			event.preventDefault();
+			isNavOpen = false;
+		}
+	}
+</script>
+
+<svelte:head>
+	<link rel="icon" href={favicon} />
+</svelte:head>
+
+<div class="app-shell">
+	<div class="mobile-header">
+		<h1>Arc Spirits Rev 2</h1>
+		<button
+			type="button"
+			class="nav-toggle"
+			aria-expanded={isNavOpen}
+			aria-controls="sidebar-navigation"
+			onclick={() => (isNavOpen = !isNavOpen)}
+		>
+			<span class="nav-toggle__icon">{isNavOpen ? '✕' : '☰'}</span>
+		</button>
+	</div>
+
+	<nav class={`sidebar ${isNavOpen ? 'sidebar--open' : ''}`} aria-label="Main navigation">
+		<div class="sidebar-header">
+			<h1>Arc Spirits</h1>
+		</div>
+
+		<div
+			bind:this={navList}
+			id="sidebar-navigation"
+			class="sidebar-nav"
+			style={`--nav-height:${navHeight}px`}
+		>
+			{#each navItems as item}
+				<a
+					href={item.href}
+					class={`nav-button ${activeHref === item.href ? 'is-active' : ''}`}
+					data-sveltekit-preload-data
+					onclick={handleNavigate}
+				>
+					<span class="nav-icon" aria-hidden="true">{item.icon}</span>
+					<span class="nav-label">{item.label}</span>
+				</a>
+			{/each}
+		</div>
+	</nav>
+
+	{#if isNavOpen && viewportWidth < 960}
+		<div
+			class="backdrop"
+			role="button"
+			tabindex="0"
+			onclick={() => (isNavOpen = false)}
+			onkeydown={handleBackdropKey}
+		></div>
+	{/if}
+
+	<main class="main-content">{@render children?.()}</main>
+</div>
+
+<style>
+	.app-shell {
+		min-height: 100vh;
+		display: flex;
+		background: radial-gradient(circle at top, rgba(30, 41, 59, 0.55), rgba(2, 6, 23, 0.95)),
+			#020617;
+	}
+
+	.mobile-header {
+		position: fixed;
+		top: 0;
+		left: 0;
+		right: 0;
+		z-index: 30;
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		padding: 0.75rem 1rem;
+		background: rgba(5, 7, 16, 0.95);
+		backdrop-filter: blur(8px);
+		border-bottom: 1px solid rgba(148, 163, 184, 0.15);
+	}
+
+	.mobile-header h1 {
+		margin: 0;
+		font-size: 1rem;
+		letter-spacing: 0.06em;
+		text-transform: uppercase;
+		color: #f8fafc;
+		text-shadow: 0 0 13px rgba(129, 140, 248, 0.45);
+	}
+
+	.nav-toggle {
+		border: none;
+		background: rgba(30, 41, 59, 0.8);
+		color: inherit;
+		padding: 0.35rem 0.55rem;
+		border-radius: 8px;
+		cursor: pointer;
+	}
+
+	.nav-toggle__icon {
+		font-size: 1.1rem;
+	}
+
+	.sidebar {
+		position: fixed;
+		top: 0;
+		left: -200px;
+		width: 200px;
+		height: 100vh;
+		z-index: 40;
+		display: flex;
+		flex-direction: column;
+		background: rgba(5, 7, 16, 0.95);
+		backdrop-filter: blur(8px);
+		border-right: 1px solid rgba(148, 163, 184, 0.15);
+		box-shadow: 3px 0 16px rgba(15, 23, 42, 0.45);
+		transition: left 0.3s ease;
+	}
+
+	.sidebar--open {
+		left: 0;
+	}
+
+	.sidebar-header {
+		padding: 1.25rem 1rem 1rem;
+		border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+	}
+
+	.sidebar-header h1 {
+		margin: 0;
+		font-size: 1.2rem;
+		color: #f8fafc;
+		letter-spacing: 0.05em;
+		text-transform: uppercase;
+		text-shadow: 0 0 12px rgba(129, 140, 248, 0.5);
+	}
+
+	.sidebar-nav {
+		flex: 1;
+		display: flex;
+		flex-direction: column;
+		gap: 0.33rem;
+		padding: 1rem 0.75rem;
+		overflow-y: auto;
+	}
+
+	.nav-button {
+		display: flex;
+		align-items: center;
+		gap: 0.6rem;
+		padding: 0.5rem 0.7rem;
+		border-radius: 9px;
+		color: #cbd5f5;
+		text-decoration: none;
+		background: rgba(30, 41, 59, 0.7);
+		border: 1px solid rgba(148, 163, 184, 0.15);
+		transition: transform 0.15s ease, box-shadow 0.15s ease, border 0.15s ease;
+	}
+
+	.nav-button:hover {
+		transform: translateX(3px);
+		border-color: rgba(148, 163, 184, 0.35);
+		box-shadow: 0 0 12px rgba(79, 70, 229, 0.25);
+	}
+
+	.nav-button.is-active {
+		background: linear-gradient(135deg, rgba(59, 130, 246, 0.5), rgba(139, 92, 246, 0.5));
+		border-color: transparent;
+		color: #f8fafc;
+		box-shadow: 0 0 16px rgba(59, 130, 246, 0.3);
+	}
+
+	.nav-icon {
+		font-size: 1.1rem;
+	}
+
+	.main-content {
+		margin-left: 0;
+		flex: 1;
+		min-height: 100vh;
+		padding: 4.25rem 1rem 1.5rem;
+		display: flex;
+	}
+
+	.main-content :global(.page) {
+		width: 100%;
+		max-width: 1040px;
+		margin: 0 auto;
+	}
+
+	.backdrop {
+		position: fixed;
+		inset: 0;
+		background: rgba(2, 6, 23, 0.7);
+		z-index: 35;
+	}
+
+	@media (min-width: 960px) {
+		.mobile-header {
+			display: none;
+		}
+
+		.sidebar {
+			left: 0;
+		}
+
+		.main-content {
+			margin-left: 200px;
+			padding: 1.75rem 2rem 2.5rem;
+		}
+	}
+</style>
