@@ -1,0 +1,2404 @@
+{
+  "exported_at": "2025-11-26T03:56:16.821Z",
+  "hex_spirits": [
+    {
+      "id": "70ed3fcd-a7c2-4443-b5e7-9b6de8491917",
+      "name": "Hollow Eyes",
+      "cost": 5,
+      "traits": {
+        "origins": [
+          {
+            "id": "27531555-353f-49be-b05e-e78f35e0a7b3",
+            "name": "Void"
+          },
+          {
+            "id": "27531555-353f-49be-b05e-e78f35e0a7b3",
+            "name": "Void"
+          }
+        ],
+        "classes": [
+          {
+            "id": "f5438f3c-2052-4093-b402-893a45cf7046",
+            "name": "Animal"
+          },
+          {
+            "id": "f5438f3c-2052-4093-b402-893a45cf7046",
+            "name": "Animal"
+          },
+          {
+            "id": "f5438f3c-2052-4093-b402-893a45cf7046",
+            "name": "Animal"
+          }
+        ]
+      },
+      "image_url": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/hex_spirits/70ed3fcd-a7c2-4443-b5e7-9b6de8491917/game_print/hex_hollow_eyes_game_print.png?quality=80"
+    },
+    {
+      "id": "5dc44c85-8224-4c49-89ff-90a37aa10040",
+      "name": "Meteor Shower",
+      "cost": 9,
+      "traits": {
+        "origins": [
+          {
+            "id": "9d4457d3-2a6c-4430-8c1b-1bf1bc20889a",
+            "name": "Astral Zone"
+          }
+        ],
+        "classes": [
+          {
+            "id": "173589ed-9bec-4965-94e6-dadbc6b5310a",
+            "name": "Sorcerer"
+          },
+          {
+            "id": "173589ed-9bec-4965-94e6-dadbc6b5310a",
+            "name": "Sorcerer"
+          },
+          {
+            "id": "173589ed-9bec-4965-94e6-dadbc6b5310a",
+            "name": "Sorcerer"
+          }
+        ]
+      },
+      "image_url": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/hex_spirits/5dc44c85-8224-4c49-89ff-90a37aa10040/game_print/hex_meteor_shower_game_print.png?quality=80"
+    },
+    {
+      "id": "36bb656c-49fe-4d50-a037-b29dbd1bfa91",
+      "name": "Glimmercut",
+      "cost": 9,
+      "traits": {
+        "origins": [
+          {
+            "id": "b4a04571-548d-4572-a6a8-0b85c39316d3",
+            "name": "Twilight Fairies"
+          }
+        ],
+        "classes": [
+          {
+            "id": "dd17c072-159c-4b43-831f-1f51bb8b7720",
+            "name": "Swordsman"
+          },
+          {
+            "id": "dd17c072-159c-4b43-831f-1f51bb8b7720",
+            "name": "Swordsman"
+          },
+          {
+            "id": "dd17c072-159c-4b43-831f-1f51bb8b7720",
+            "name": "Swordsman"
+          }
+        ]
+      },
+      "image_url": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/hex_spirits/36bb656c-49fe-4d50-a037-b29dbd1bfa91/game_print/hex_glimmercut_game_print.png?quality=80"
+    },
+    {
+      "id": "fc667265-edd6-4c28-b96e-6e505188ce72",
+      "name": "Shadowtaker",
+      "cost": 9,
+      "traits": {
+        "origins": [
+          {
+            "id": "27531555-353f-49be-b05e-e78f35e0a7b3",
+            "name": "Void"
+          }
+        ],
+        "classes": [
+          {
+            "id": "dd17c072-159c-4b43-831f-1f51bb8b7720",
+            "name": "Swordsman"
+          },
+          {
+            "id": "dd17c072-159c-4b43-831f-1f51bb8b7720",
+            "name": "Swordsman"
+          },
+          {
+            "id": "dd17c072-159c-4b43-831f-1f51bb8b7720",
+            "name": "Swordsman"
+          }
+        ]
+      },
+      "image_url": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/hex_spirits/fc667265-edd6-4c28-b96e-6e505188ce72/game_print/hex_shadowtaker_game_print.png?quality=80"
+    },
+    {
+      "id": "e4822f18-98f0-44fd-8711-756f946f6cd5",
+      "name": "Contessa",
+      "cost": 7,
+      "traits": {
+        "origins": [
+          {
+            "id": "27531555-353f-49be-b05e-e78f35e0a7b3",
+            "name": "Void"
+          }
+        ],
+        "classes": [
+          {
+            "id": "5d1c9e89-e431-41dc-ae67-77dd8ee78170",
+            "name": "Archer"
+          },
+          {
+            "id": "5d1c9e89-e431-41dc-ae67-77dd8ee78170",
+            "name": "Archer"
+          }
+        ]
+      },
+      "image_url": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/hex_spirits/e4822f18-98f0-44fd-8711-756f946f6cd5/game_print/hex_contessa_game_print.png?quality=80"
+    },
+    {
+      "id": "70f8e74b-3e90-4d24-946b-d665f3e89f7a",
+      "name": "Worldwide Scout",
+      "cost": 7,
+      "traits": {
+        "origins": [
+          {
+            "id": "82816408-d2e1-4e2c-9954-d9aea0bad324",
+            "name": "Arctic Nest"
+          }
+        ],
+        "classes": [
+          {
+            "id": "17e08cde-f3d2-480b-8386-1e3047e2f85a",
+            "name": "Strategist"
+          },
+          {
+            "id": "17e08cde-f3d2-480b-8386-1e3047e2f85a",
+            "name": "Strategist"
+          }
+        ]
+      },
+      "image_url": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/hex_spirits/70f8e74b-3e90-4d24-946b-d665f3e89f7a/game_print/hex_worldwide_scout_game_print.png?quality=80"
+    },
+    {
+      "id": "40016186-6b98-4dbb-8364-b50d27e9f394",
+      "name": "ERRORCODER",
+      "cost": 7,
+      "traits": {
+        "origins": [
+          {
+            "id": "fa7db249-d99d-4c1d-a37d-9027c9f5a31e",
+            "name": "Cyber City"
+          }
+        ],
+        "classes": [
+          {
+            "id": "173589ed-9bec-4965-94e6-dadbc6b5310a",
+            "name": "Sorcerer"
+          },
+          {
+            "id": "173589ed-9bec-4965-94e6-dadbc6b5310a",
+            "name": "Sorcerer"
+          }
+        ]
+      },
+      "image_url": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/hex_spirits/40016186-6b98-4dbb-8364-b50d27e9f394/game_print/hex_errorcoder_game_print.png?quality=80"
+    },
+    {
+      "id": "b3068fcf-d197-4030-ba55-29ac1621f9a9",
+      "name": "Space Invader",
+      "cost": 7,
+      "traits": {
+        "origins": [
+          {
+            "id": "27531555-353f-49be-b05e-e78f35e0a7b3",
+            "name": "Void"
+          }
+        ],
+        "classes": [
+          {
+            "id": "dd17c072-159c-4b43-831f-1f51bb8b7720",
+            "name": "Swordsman"
+          },
+          {
+            "id": "dd17c072-159c-4b43-831f-1f51bb8b7720",
+            "name": "Swordsman"
+          }
+        ]
+      },
+      "image_url": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/hex_spirits/b3068fcf-d197-4030-ba55-29ac1621f9a9/game_print/hex_space_invader_game_print.png?quality=80"
+    },
+    {
+      "id": "e06a951e-efb7-4975-9ccd-aa95e8f9bef5",
+      "name": "Yeti Rogue",
+      "cost": 3,
+      "traits": {
+        "origins": [
+          {
+            "id": "82816408-d2e1-4e2c-9954-d9aea0bad324",
+            "name": "Arctic Nest"
+          },
+          {
+            "id": "82816408-d2e1-4e2c-9954-d9aea0bad324",
+            "name": "Arctic Nest"
+          }
+        ],
+        "classes": [
+          {
+            "id": "dd17c072-159c-4b43-831f-1f51bb8b7720",
+            "name": "Swordsman"
+          },
+          {
+            "id": "dd17c072-159c-4b43-831f-1f51bb8b7720",
+            "name": "Swordsman"
+          }
+        ]
+      },
+      "image_url": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/hex_spirits/e06a951e-efb7-4975-9ccd-aa95e8f9bef5/game_print/hex_yeti_rogue_game_print.png?quality=80"
+    },
+    {
+      "id": "5e068dff-1341-48f7-b025-849f336f724c",
+      "name": "Egg Keeper",
+      "cost": 3,
+      "traits": {
+        "origins": [
+          {
+            "id": "82816408-d2e1-4e2c-9954-d9aea0bad324",
+            "name": "Arctic Nest"
+          },
+          {
+            "id": "82816408-d2e1-4e2c-9954-d9aea0bad324",
+            "name": "Arctic Nest"
+          }
+        ],
+        "classes": [
+          {
+            "id": "46cf02f0-a3cd-4211-bde4-cc3c5417bd6f",
+            "name": "Protector"
+          },
+          {
+            "id": "46cf02f0-a3cd-4211-bde4-cc3c5417bd6f",
+            "name": "Protector"
+          }
+        ]
+      },
+      "image_url": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/hex_spirits/5e068dff-1341-48f7-b025-849f336f724c/game_print/hex_egg_keeper_game_print.png?quality=80"
+    },
+    {
+      "id": "aa541f5d-f648-4964-9e8b-db891c2bbd81",
+      "name": "Zone Guard",
+      "cost": 1,
+      "traits": {
+        "origins": [],
+        "classes": [
+          {
+            "id": "46cf02f0-a3cd-4211-bde4-cc3c5417bd6f",
+            "name": "Protector"
+          },
+          {
+            "id": "46cf02f0-a3cd-4211-bde4-cc3c5417bd6f",
+            "name": "Protector"
+          },
+          {
+            "id": "46cf02f0-a3cd-4211-bde4-cc3c5417bd6f",
+            "name": "Protector"
+          }
+        ]
+      },
+      "image_url": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/hex_spirits/aa541f5d-f648-4964-9e8b-db891c2bbd81/game_print/hex_zone_guard_game_print.png?quality=80"
+    },
+    {
+      "id": "ed612933-fd19-4b68-993e-6e61b52eb4ce",
+      "name": "Comet Caller",
+      "cost": 9,
+      "traits": {
+        "origins": [
+          {
+            "id": "9d4457d3-2a6c-4430-8c1b-1bf1bc20889a",
+            "name": "Astral Zone"
+          }
+        ],
+        "classes": [
+          {
+            "id": "5d1c9e89-e431-41dc-ae67-77dd8ee78170",
+            "name": "Archer"
+          },
+          {
+            "id": "5d1c9e89-e431-41dc-ae67-77dd8ee78170",
+            "name": "Archer"
+          },
+          {
+            "id": "5d1c9e89-e431-41dc-ae67-77dd8ee78170",
+            "name": "Archer"
+          }
+        ]
+      },
+      "image_url": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/hex_spirits/ed612933-fd19-4b68-993e-6e61b52eb4ce/game_print/hex_comet_caller_game_print.png?quality=80"
+    },
+    {
+      "id": "5c864c2d-20bd-4134-a829-09a2cc793e41",
+      "name": "Sparkweave",
+      "cost": 9,
+      "traits": {
+        "origins": [
+          {
+            "id": "b4a04571-548d-4572-a6a8-0b85c39316d3",
+            "name": "Twilight Fairies"
+          }
+        ],
+        "classes": [
+          {
+            "id": "173589ed-9bec-4965-94e6-dadbc6b5310a",
+            "name": "Sorcerer"
+          },
+          {
+            "id": "173589ed-9bec-4965-94e6-dadbc6b5310a",
+            "name": "Sorcerer"
+          },
+          {
+            "id": "173589ed-9bec-4965-94e6-dadbc6b5310a",
+            "name": "Sorcerer"
+          }
+        ]
+      },
+      "image_url": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/hex_spirits/5c864c2d-20bd-4134-a829-09a2cc793e41/game_print/hex_sparkweave_game_print.png?quality=80"
+    },
+    {
+      "id": "cafb6cfb-11f8-476c-a275-a5b8179630d2",
+      "name": "Ocean Divider",
+      "cost": 9,
+      "traits": {
+        "origins": [
+          {
+            "id": "294cee31-a7ac-4292-9b61-d4293c05c146",
+            "name": "Tidal Tribe"
+          }
+        ],
+        "classes": [
+          {
+            "id": "aa90084b-a07a-4b00-9448-9f5dae83bd03",
+            "name": "Support"
+          },
+          {
+            "id": "aa90084b-a07a-4b00-9448-9f5dae83bd03",
+            "name": "Support"
+          },
+          {
+            "id": "aa90084b-a07a-4b00-9448-9f5dae83bd03",
+            "name": "Support"
+          }
+        ]
+      },
+      "image_url": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/hex_spirits/cafb6cfb-11f8-476c-a275-a5b8179630d2/game_print/hex_ocean_divider_game_print.png?quality=80"
+    },
+    {
+      "id": "5f719599-3914-440e-b518-2426ab1e83c5",
+      "name": "Internet Idol",
+      "cost": 9,
+      "traits": {
+        "origins": [
+          {
+            "id": "fa7db249-d99d-4c1d-a37d-9027c9f5a31e",
+            "name": "Cyber City"
+          }
+        ],
+        "classes": [
+          {
+            "id": "91322cba-4201-48a3-86b1-2d6d034fce3f",
+            "name": "Special"
+          },
+          {
+            "id": "91322cba-4201-48a3-86b1-2d6d034fce3f",
+            "name": "Special"
+          },
+          {
+            "id": "91322cba-4201-48a3-86b1-2d6d034fce3f",
+            "name": "Special"
+          }
+        ]
+      },
+      "image_url": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/hex_spirits/5f719599-3914-440e-b518-2426ab1e83c5/game_print/hex_internet_idol_game_print.png?quality=80"
+    },
+    {
+      "id": "32ce96bc-be67-4781-99bd-3670aff77ed0",
+      "name": "Cupid",
+      "cost": 9,
+      "traits": {
+        "origins": [
+          {
+            "id": "b4a04571-548d-4572-a6a8-0b85c39316d3",
+            "name": "Twilight Fairies"
+          }
+        ],
+        "classes": [
+          {
+            "id": "5d1c9e89-e431-41dc-ae67-77dd8ee78170",
+            "name": "Archer"
+          },
+          {
+            "id": "5d1c9e89-e431-41dc-ae67-77dd8ee78170",
+            "name": "Archer"
+          },
+          {
+            "id": "5d1c9e89-e431-41dc-ae67-77dd8ee78170",
+            "name": "Archer"
+          }
+        ]
+      },
+      "image_url": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/hex_spirits/32ce96bc-be67-4781-99bd-3670aff77ed0/game_print/hex_cupid_game_print.png?quality=80"
+    },
+    {
+      "id": "e368f98d-fa19-47b0-bb54-1dd26d902b23",
+      "name": "Dandelion",
+      "cost": 3,
+      "traits": {
+        "origins": [
+          {
+            "id": "ad555f03-9b89-4a71-a47c-464fd67d2c05",
+            "name": "Floral Patch"
+          },
+          {
+            "id": "ad555f03-9b89-4a71-a47c-464fd67d2c05",
+            "name": "Floral Patch"
+          },
+          {
+            "id": "ad555f03-9b89-4a71-a47c-464fd67d2c05",
+            "name": "Floral Patch"
+          },
+          {
+            "id": "ad555f03-9b89-4a71-a47c-464fd67d2c05",
+            "name": "Floral Patch"
+          }
+        ],
+        "classes": [
+          {
+            "id": "aa90084b-a07a-4b00-9448-9f5dae83bd03",
+            "name": "Support"
+          },
+          {
+            "id": "aa90084b-a07a-4b00-9448-9f5dae83bd03",
+            "name": "Support"
+          },
+          {
+            "id": "aa90084b-a07a-4b00-9448-9f5dae83bd03",
+            "name": "Support"
+          },
+          {
+            "id": "aa90084b-a07a-4b00-9448-9f5dae83bd03",
+            "name": "Support"
+          }
+        ]
+      },
+      "image_url": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/hex_spirits/e368f98d-fa19-47b0-bb54-1dd26d902b23/game_print/hex_dandelion_game_print.png?quality=80"
+    },
+    {
+      "id": "a77653c5-69fa-4351-833d-59d302722365",
+      "name": "Golden Ruler",
+      "cost": 9,
+      "traits": {
+        "origins": [
+          {
+            "id": "59d3e23e-c7fd-48f9-911d-b8a306029404",
+            "name": "(E) Royal Family"
+          }
+        ],
+        "classes": [
+          {
+            "id": "91322cba-4201-48a3-86b1-2d6d034fce3f",
+            "name": "Special"
+          },
+          {
+            "id": "91322cba-4201-48a3-86b1-2d6d034fce3f",
+            "name": "Special"
+          },
+          {
+            "id": "91322cba-4201-48a3-86b1-2d6d034fce3f",
+            "name": "Special"
+          }
+        ]
+      },
+      "image_url": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/hex_spirits/a77653c5-69fa-4351-833d-59d302722365/game_print/hex_golden_ruler_game_print.png?quality=80"
+    },
+    {
+      "id": "0f2d7926-6f51-4a24-993d-67277778f57c",
+      "name": "Special Agent",
+      "cost": 7,
+      "traits": {
+        "origins": [],
+        "classes": [
+          {
+            "id": "91322cba-4201-48a3-86b1-2d6d034fce3f",
+            "name": "Special"
+          },
+          {
+            "id": "91322cba-4201-48a3-86b1-2d6d034fce3f",
+            "name": "Special"
+          }
+        ]
+      },
+      "image_url": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/hex_spirits/0f2d7926-6f51-4a24-993d-67277778f57c/game_print/hex_special_agent_game_print.png?quality=80"
+    },
+    {
+      "id": "3b196b06-a047-4505-aad6-bf0c9fe05ac0",
+      "name": "Rootguard",
+      "cost": 5,
+      "traits": {
+        "origins": [
+          {
+            "id": "ad555f03-9b89-4a71-a47c-464fd67d2c05",
+            "name": "Floral Patch"
+          }
+        ],
+        "classes": [
+          {
+            "id": "46cf02f0-a3cd-4211-bde4-cc3c5417bd6f",
+            "name": "Protector"
+          }
+        ]
+      },
+      "image_url": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/hex_spirits/3b196b06-a047-4505-aad6-bf0c9fe05ac0/game_print/hex_rootguard_game_print.png?quality=80"
+    },
+    {
+      "id": "955abfc0-fa04-4ab3-bcaf-5dc2839ddec0",
+      "name": "Shell Defender",
+      "cost": 3,
+      "traits": {
+        "origins": [
+          {
+            "id": "294cee31-a7ac-4292-9b61-d4293c05c146",
+            "name": "Tidal Tribe"
+          },
+          {
+            "id": "294cee31-a7ac-4292-9b61-d4293c05c146",
+            "name": "Tidal Tribe"
+          }
+        ],
+        "classes": [
+          {
+            "id": "46cf02f0-a3cd-4211-bde4-cc3c5417bd6f",
+            "name": "Protector"
+          },
+          {
+            "id": "46cf02f0-a3cd-4211-bde4-cc3c5417bd6f",
+            "name": "Protector"
+          }
+        ]
+      },
+      "image_url": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/hex_spirits/955abfc0-fa04-4ab3-bcaf-5dc2839ddec0/game_print/hex_shell_defender_game_print.png?quality=80"
+    },
+    {
+      "id": "afcb8700-c12e-45b5-b844-bf4339354e76",
+      "name": "Flowercracker",
+      "cost": 3,
+      "traits": {
+        "origins": [
+          {
+            "id": "ad555f03-9b89-4a71-a47c-464fd67d2c05",
+            "name": "Floral Patch"
+          },
+          {
+            "id": "ad555f03-9b89-4a71-a47c-464fd67d2c05",
+            "name": "Floral Patch"
+          },
+          {
+            "id": "ad555f03-9b89-4a71-a47c-464fd67d2c05",
+            "name": "Floral Patch"
+          }
+        ],
+        "classes": [
+          {
+            "id": "5d1c9e89-e431-41dc-ae67-77dd8ee78170",
+            "name": "Archer"
+          },
+          {
+            "id": "5d1c9e89-e431-41dc-ae67-77dd8ee78170",
+            "name": "Archer"
+          }
+        ]
+      },
+      "image_url": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/hex_spirits/afcb8700-c12e-45b5-b844-bf4339354e76/game_print/hex_flowercracker_game_print.png?quality=80"
+    },
+    {
+      "id": "ae827012-29ff-406e-bcbe-afe3a5258607",
+      "name": "Pixia",
+      "cost": 7,
+      "traits": {
+        "origins": [
+          {
+            "id": "b4a04571-548d-4572-a6a8-0b85c39316d3",
+            "name": "Twilight Fairies"
+          }
+        ],
+        "classes": [
+          {
+            "id": "46cf02f0-a3cd-4211-bde4-cc3c5417bd6f",
+            "name": "Protector"
+          },
+          {
+            "id": "46cf02f0-a3cd-4211-bde4-cc3c5417bd6f",
+            "name": "Protector"
+          }
+        ]
+      },
+      "image_url": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/hex_spirits/ae827012-29ff-406e-bcbe-afe3a5258607/game_print/hex_pixia_game_print.png?quality=80"
+    },
+    {
+      "id": "fc5835e9-156b-44fd-8037-832124df724c",
+      "name": "Canine Unit",
+      "cost": 1,
+      "traits": {
+        "origins": [],
+        "classes": [
+          {
+            "id": "f5438f3c-2052-4093-b402-893a45cf7046",
+            "name": "Animal"
+          },
+          {
+            "id": "f5438f3c-2052-4093-b402-893a45cf7046",
+            "name": "Animal"
+          }
+        ]
+      },
+      "image_url": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/hex_spirits/fc5835e9-156b-44fd-8037-832124df724c/game_print/hex_canine_unit_game_print.png?quality=80"
+    },
+    {
+      "id": "c0d12557-4615-4c60-a93c-622e5fc70eae",
+      "name": "Fairy Hunter",
+      "cost": 7,
+      "traits": {
+        "origins": [
+          {
+            "id": "b4a04571-548d-4572-a6a8-0b85c39316d3",
+            "name": "Twilight Fairies"
+          }
+        ],
+        "classes": [
+          {
+            "id": "aa90084b-a07a-4b00-9448-9f5dae83bd03",
+            "name": "Support"
+          },
+          {
+            "id": "aa90084b-a07a-4b00-9448-9f5dae83bd03",
+            "name": "Support"
+          }
+        ]
+      },
+      "image_url": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/hex_spirits/c0d12557-4615-4c60-a93c-622e5fc70eae/game_print/hex_fairy_hunter_game_print.png?quality=80"
+    },
+    {
+      "id": "e9e12faa-0add-4fab-b251-a9dec5a8bae9",
+      "name": "Cosmic Sentry",
+      "cost": 7,
+      "traits": {
+        "origins": [
+          {
+            "id": "9d4457d3-2a6c-4430-8c1b-1bf1bc20889a",
+            "name": "Astral Zone"
+          }
+        ],
+        "classes": [
+          {
+            "id": "173589ed-9bec-4965-94e6-dadbc6b5310a",
+            "name": "Sorcerer"
+          },
+          {
+            "id": "173589ed-9bec-4965-94e6-dadbc6b5310a",
+            "name": "Sorcerer"
+          }
+        ]
+      },
+      "image_url": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/hex_spirits/e9e12faa-0add-4fab-b251-a9dec5a8bae9/game_print/hex_cosmic_sentry_game_print.png?quality=80"
+    },
+    {
+      "id": "c6548ffd-4852-4e62-9c5a-9329e40d222e",
+      "name": "Rain Shower",
+      "cost": 5,
+      "traits": {
+        "origins": [
+          {
+            "id": "294cee31-a7ac-4292-9b61-d4293c05c146",
+            "name": "Tidal Tribe"
+          }
+        ],
+        "classes": [
+          {
+            "id": "aa90084b-a07a-4b00-9448-9f5dae83bd03",
+            "name": "Support"
+          }
+        ]
+      },
+      "image_url": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/hex_spirits/c6548ffd-4852-4e62-9c5a-9329e40d222e/game_print/hex_rain_shower_game_print.png?quality=80"
+    },
+    {
+      "id": "e5dff9be-ac58-47bb-bd9d-69efb03dc393",
+      "name": "Florality",
+      "cost": 9,
+      "traits": {
+        "origins": [
+          {
+            "id": "ad555f03-9b89-4a71-a47c-464fd67d2c05",
+            "name": "Floral Patch"
+          },
+          {
+            "id": "ad555f03-9b89-4a71-a47c-464fd67d2c05",
+            "name": "Floral Patch"
+          },
+          {
+            "id": "ad555f03-9b89-4a71-a47c-464fd67d2c05",
+            "name": "Floral Patch"
+          }
+        ],
+        "classes": [
+          {
+            "id": "91322cba-4201-48a3-86b1-2d6d034fce3f",
+            "name": "Special"
+          },
+          {
+            "id": "91322cba-4201-48a3-86b1-2d6d034fce3f",
+            "name": "Special"
+          },
+          {
+            "id": "91322cba-4201-48a3-86b1-2d6d034fce3f",
+            "name": "Special"
+          },
+          {
+            "id": "17e08cde-f3d2-480b-8386-1e3047e2f85a",
+            "name": "Strategist"
+          }
+        ]
+      },
+      "image_url": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/hex_spirits/e5dff9be-ac58-47bb-bd9d-69efb03dc393/game_print/hex_naturewise_game_print.png?quality=80"
+    },
+    {
+      "id": "d19f66b7-787b-4c5b-b498-e1f8fb7688e0",
+      "name": "Flower Fighter",
+      "cost": 7,
+      "traits": {
+        "origins": [
+          {
+            "id": "ad555f03-9b89-4a71-a47c-464fd67d2c05",
+            "name": "Floral Patch"
+          },
+          {
+            "id": "ad555f03-9b89-4a71-a47c-464fd67d2c05",
+            "name": "Floral Patch"
+          },
+          {
+            "id": "ad555f03-9b89-4a71-a47c-464fd67d2c05",
+            "name": "Floral Patch"
+          }
+        ],
+        "classes": [
+          {
+            "id": "dd17c072-159c-4b43-831f-1f51bb8b7720",
+            "name": "Swordsman"
+          },
+          {
+            "id": "dd17c072-159c-4b43-831f-1f51bb8b7720",
+            "name": "Swordsman"
+          },
+          {
+            "id": "dd17c072-159c-4b43-831f-1f51bb8b7720",
+            "name": "Swordsman"
+          }
+        ]
+      },
+      "image_url": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/hex_spirits/d19f66b7-787b-4c5b-b498-e1f8fb7688e0/game_print/hex_flower_fighter_game_print.png?quality=80"
+    },
+    {
+      "id": "6de3ace4-20bc-45cd-a0ad-9d462380d940",
+      "name": "Gamer",
+      "cost": 1,
+      "traits": {
+        "origins": [],
+        "classes": [
+          {
+            "id": "17e08cde-f3d2-480b-8386-1e3047e2f85a",
+            "name": "Strategist"
+          },
+          {
+            "id": "17e08cde-f3d2-480b-8386-1e3047e2f85a",
+            "name": "Strategist"
+          }
+        ]
+      },
+      "image_url": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/hex_spirits/6de3ace4-20bc-45cd-a0ad-9d462380d940/game_print/hex_gamer_game_print.png?quality=80"
+    },
+    {
+      "id": "a6c24fba-940e-4aa9-8729-a361f7209f9c",
+      "name": "Sniper",
+      "cost": 1,
+      "traits": {
+        "origins": [],
+        "classes": [
+          {
+            "id": "5d1c9e89-e431-41dc-ae67-77dd8ee78170",
+            "name": "Archer"
+          },
+          {
+            "id": "5d1c9e89-e431-41dc-ae67-77dd8ee78170",
+            "name": "Archer"
+          }
+        ]
+      },
+      "image_url": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/hex_spirits/a6c24fba-940e-4aa9-8729-a361f7209f9c/game_print/hex_sniper_game_print.png?quality=80"
+    },
+    {
+      "id": "4e4a5302-64d9-4960-9b0b-72081c4a30e5",
+      "name": "Snowman",
+      "cost": 1,
+      "traits": {
+        "origins": [
+          {
+            "id": "82816408-d2e1-4e2c-9954-d9aea0bad324",
+            "name": "Arctic Nest"
+          },
+          {
+            "id": "82816408-d2e1-4e2c-9954-d9aea0bad324",
+            "name": "Arctic Nest"
+          },
+          {
+            "id": "82816408-d2e1-4e2c-9954-d9aea0bad324",
+            "name": "Arctic Nest"
+          }
+        ],
+        "classes": [
+          {
+            "id": "f5438f3c-2052-4093-b402-893a45cf7046",
+            "name": "Animal"
+          },
+          {
+            "id": "f5438f3c-2052-4093-b402-893a45cf7046",
+            "name": "Animal"
+          }
+        ]
+      },
+      "image_url": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/hex_spirits/4e4a5302-64d9-4960-9b0b-72081c4a30e5/game_print/hex_snowman_game_print.png?quality=80"
+    },
+    {
+      "id": "241c977c-d1c8-4ef5-856b-8100ef228f72",
+      "name": "Jellyfish",
+      "cost": 5,
+      "traits": {
+        "origins": [
+          {
+            "id": "294cee31-a7ac-4292-9b61-d4293c05c146",
+            "name": "Tidal Tribe"
+          }
+        ],
+        "classes": [
+          {
+            "id": "17e08cde-f3d2-480b-8386-1e3047e2f85a",
+            "name": "Strategist"
+          }
+        ]
+      },
+      "image_url": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/hex_spirits/241c977c-d1c8-4ef5-856b-8100ef228f72/game_print/hex_jellyfish_game_print.png?quality=80"
+    },
+    {
+      "id": "aac7c718-b612-4695-8bdc-5c217fa226f3",
+      "name": "Snowbombs",
+      "cost": 3,
+      "traits": {
+        "origins": [
+          {
+            "id": "82816408-d2e1-4e2c-9954-d9aea0bad324",
+            "name": "Arctic Nest"
+          },
+          {
+            "id": "82816408-d2e1-4e2c-9954-d9aea0bad324",
+            "name": "Arctic Nest"
+          }
+        ],
+        "classes": [
+          {
+            "id": "5d1c9e89-e431-41dc-ae67-77dd8ee78170",
+            "name": "Archer"
+          },
+          {
+            "id": "5d1c9e89-e431-41dc-ae67-77dd8ee78170",
+            "name": "Archer"
+          }
+        ]
+      },
+      "image_url": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/hex_spirits/aac7c718-b612-4695-8bdc-5c217fa226f3/game_print/hex_snowbombs_game_print.png?quality=80"
+    },
+    {
+      "id": "2d7981eb-440d-45ec-b058-d495e703c71e",
+      "name": "Undercover Maid",
+      "cost": 3,
+      "traits": {
+        "origins": [
+          {
+            "id": "59d3e23e-c7fd-48f9-911d-b8a306029404",
+            "name": "(E) Royal Family"
+          },
+          {
+            "id": "59d3e23e-c7fd-48f9-911d-b8a306029404",
+            "name": "(E) Royal Family"
+          },
+          {
+            "id": "59d3e23e-c7fd-48f9-911d-b8a306029404",
+            "name": "(E) Royal Family"
+          }
+        ],
+        "classes": [
+          {
+            "id": "aa90084b-a07a-4b00-9448-9f5dae83bd03",
+            "name": "Support"
+          },
+          {
+            "id": "aa90084b-a07a-4b00-9448-9f5dae83bd03",
+            "name": "Support"
+          },
+          {
+            "id": "aa90084b-a07a-4b00-9448-9f5dae83bd03",
+            "name": "Support"
+          }
+        ]
+      },
+      "image_url": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/hex_spirits/2d7981eb-440d-45ec-b058-d495e703c71e/game_print/hex_undercover_maid_game_print.png?quality=80"
+    },
+    {
+      "id": "f043914f-9259-481f-960d-ab83a48b06ba",
+      "name": "Swordsman",
+      "cost": 1,
+      "traits": {
+        "origins": [],
+        "classes": [
+          {
+            "id": "dd17c072-159c-4b43-831f-1f51bb8b7720",
+            "name": "Swordsman"
+          },
+          {
+            "id": "dd17c072-159c-4b43-831f-1f51bb8b7720",
+            "name": "Swordsman"
+          }
+        ]
+      },
+      "image_url": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/hex_spirits/f043914f-9259-481f-960d-ab83a48b06ba/game_print/hex_swordsman_game_print.png?quality=80"
+    },
+    {
+      "id": "9ef2c6f9-c6b3-4ec0-8e6e-4ddd5b26b344",
+      "name": "Cyberwolf",
+      "cost": 1,
+      "traits": {
+        "origins": [
+          {
+            "id": "fa7db249-d99d-4c1d-a37d-9027c9f5a31e",
+            "name": "Cyber City"
+          },
+          {
+            "id": "fa7db249-d99d-4c1d-a37d-9027c9f5a31e",
+            "name": "Cyber City"
+          }
+        ],
+        "classes": [
+          {
+            "id": "f5438f3c-2052-4093-b402-893a45cf7046",
+            "name": "Animal"
+          },
+          {
+            "id": "f5438f3c-2052-4093-b402-893a45cf7046",
+            "name": "Animal"
+          }
+        ]
+      },
+      "image_url": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/hex_spirits/9ef2c6f9-c6b3-4ec0-8e6e-4ddd5b26b344/game_print/hex_cyberwolf_game_print.png?quality=80"
+    },
+    {
+      "id": "4ce77458-bbab-4986-8606-b500ad9c9764",
+      "name": "Ironmane",
+      "cost": 5,
+      "traits": {
+        "origins": [
+          {
+            "id": "d40b9771-29b0-4391-a9aa-41945682cd3a",
+            "name": "(E) Hero Party"
+          }
+        ],
+        "classes": [
+          {
+            "id": "f5438f3c-2052-4093-b402-893a45cf7046",
+            "name": "Animal"
+          }
+        ]
+      },
+      "image_url": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/hex_spirits/4ce77458-bbab-4986-8606-b500ad9c9764/game_print/hex_ironmane_game_print.png?quality=80"
+    },
+    {
+      "id": "a5e1965a-4b51-4de4-ad42-2f8ac085ff0e",
+      "name": "Florafox",
+      "cost": 1,
+      "traits": {
+        "origins": [
+          {
+            "id": "ad555f03-9b89-4a71-a47c-464fd67d2c05",
+            "name": "Floral Patch"
+          },
+          {
+            "id": "ad555f03-9b89-4a71-a47c-464fd67d2c05",
+            "name": "Floral Patch"
+          }
+        ],
+        "classes": [
+          {
+            "id": "f5438f3c-2052-4093-b402-893a45cf7046",
+            "name": "Animal"
+          },
+          {
+            "id": "f5438f3c-2052-4093-b402-893a45cf7046",
+            "name": "Animal"
+          }
+        ]
+      },
+      "image_url": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/hex_spirits/a5e1965a-4b51-4de4-ad42-2f8ac085ff0e/game_print/hex_florafox_game_print.png?quality=80"
+    },
+    {
+      "id": "27fe2ae1-e0ea-443f-8908-bcf1cc58cd49",
+      "name": "Zarek",
+      "cost": 5,
+      "traits": {
+        "origins": [
+          {
+            "id": "d40b9771-29b0-4391-a9aa-41945682cd3a",
+            "name": "(E) Hero Party"
+          }
+        ],
+        "classes": [
+          {
+            "id": "dd17c072-159c-4b43-831f-1f51bb8b7720",
+            "name": "Swordsman"
+          }
+        ]
+      },
+      "image_url": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/hex_spirits/27fe2ae1-e0ea-443f-8908-bcf1cc58cd49/game_print/hex_zarek_game_print.png?quality=80"
+    },
+    {
+      "id": "7e3d88c0-6854-4c13-882c-ddf78c0d2b58",
+      "name": "KO Fighter",
+      "cost": 3,
+      "traits": {
+        "origins": [
+          {
+            "id": "fa7db249-d99d-4c1d-a37d-9027c9f5a31e",
+            "name": "Cyber City"
+          }
+        ],
+        "classes": [
+          {
+            "id": "dd17c072-159c-4b43-831f-1f51bb8b7720",
+            "name": "Swordsman"
+          }
+        ]
+      },
+      "image_url": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/hex_spirits/7e3d88c0-6854-4c13-882c-ddf78c0d2b58/game_print/hex_ko_fighter_game_print.png?quality=80"
+    },
+    {
+      "id": "728c5151-2da6-4202-b5b0-aae13dec68be",
+      "name": "Child Prodigy",
+      "cost": 5,
+      "traits": {
+        "origins": [
+          {
+            "id": "59d3e23e-c7fd-48f9-911d-b8a306029404",
+            "name": "(E) Royal Family"
+          }
+        ],
+        "classes": [
+          {
+            "id": "17e08cde-f3d2-480b-8386-1e3047e2f85a",
+            "name": "Strategist"
+          }
+        ]
+      },
+      "image_url": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/hex_spirits/728c5151-2da6-4202-b5b0-aae13dec68be/game_print/hex_child_prodigy_game_print.png?quality=80"
+    },
+    {
+      "id": "487e38c3-0c11-4879-a5f2-4370dec9a680",
+      "name": "Golden Retriever",
+      "cost": 1,
+      "traits": {
+        "origins": [
+          {
+            "id": "59d3e23e-c7fd-48f9-911d-b8a306029404",
+            "name": "(E) Royal Family"
+          },
+          {
+            "id": "59d3e23e-c7fd-48f9-911d-b8a306029404",
+            "name": "(E) Royal Family"
+          }
+        ],
+        "classes": [
+          {
+            "id": "f5438f3c-2052-4093-b402-893a45cf7046",
+            "name": "Animal"
+          },
+          {
+            "id": "f5438f3c-2052-4093-b402-893a45cf7046",
+            "name": "Animal"
+          }
+        ]
+      },
+      "image_url": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/hex_spirits/487e38c3-0c11-4879-a5f2-4370dec9a680/game_print/hex_golden_retriever_game_print.png?quality=80"
+    },
+    {
+      "id": "57b06434-0eeb-4e9e-a17f-c2bdce613e52",
+      "name": "EMP Striker",
+      "cost": 1,
+      "traits": {
+        "origins": [],
+        "classes": [
+          {
+            "id": "173589ed-9bec-4965-94e6-dadbc6b5310a",
+            "name": "Sorcerer"
+          },
+          {
+            "id": "173589ed-9bec-4965-94e6-dadbc6b5310a",
+            "name": "Sorcerer"
+          }
+        ]
+      },
+      "image_url": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/hex_spirits/57b06434-0eeb-4e9e-a17f-c2bdce613e52/game_print/hex_emp_striker_game_print.png?quality=80"
+    },
+    {
+      "id": "d7987d17-40af-431e-b765-9cd9dc072245",
+      "name": "Field Nurse",
+      "cost": 1,
+      "traits": {
+        "origins": [],
+        "classes": [
+          {
+            "id": "aa90084b-a07a-4b00-9448-9f5dae83bd03",
+            "name": "Support"
+          },
+          {
+            "id": "aa90084b-a07a-4b00-9448-9f5dae83bd03",
+            "name": "Support"
+          }
+        ]
+      },
+      "image_url": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/hex_spirits/d7987d17-40af-431e-b765-9cd9dc072245/game_print/hex_field_nurse_game_print.png?quality=80"
+    },
+    {
+      "id": "4093802b-bbab-4535-9bb5-e48ab15a6841",
+      "name": "Kael",
+      "cost": 5,
+      "traits": {
+        "origins": [
+          {
+            "id": "d40b9771-29b0-4391-a9aa-41945682cd3a",
+            "name": "(E) Hero Party"
+          }
+        ],
+        "classes": [
+          {
+            "id": "46cf02f0-a3cd-4211-bde4-cc3c5417bd6f",
+            "name": "Protector"
+          }
+        ]
+      },
+      "image_url": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/hex_spirits/4093802b-bbab-4535-9bb5-e48ab15a6841/game_print/hex_kael_game_print.png?quality=80"
+    },
+    {
+      "id": "be2072ea-ccdb-4941-b1b3-26890a7b64cf",
+      "name": "Bubble Boy",
+      "cost": 3,
+      "traits": {
+        "origins": [
+          {
+            "id": "294cee31-a7ac-4292-9b61-d4293c05c146",
+            "name": "Tidal Tribe"
+          }
+        ],
+        "classes": [
+          {
+            "id": "46cf02f0-a3cd-4211-bde4-cc3c5417bd6f",
+            "name": "Protector"
+          }
+        ]
+      },
+      "image_url": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/hex_spirits/be2072ea-ccdb-4941-b1b3-26890a7b64cf/game_print/hex_bubble_boy_game_print.png?quality=80"
+    },
+    {
+      "id": "0a775e09-555f-43a7-ac5b-06aaeaa4b69c",
+      "name": "Firewall",
+      "cost": 5,
+      "traits": {
+        "origins": [
+          {
+            "id": "fa7db249-d99d-4c1d-a37d-9027c9f5a31e",
+            "name": "Cyber City"
+          }
+        ],
+        "classes": [
+          {
+            "id": "46cf02f0-a3cd-4211-bde4-cc3c5417bd6f",
+            "name": "Protector"
+          }
+        ]
+      },
+      "image_url": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/hex_spirits/0a775e09-555f-43a7-ac5b-06aaeaa4b69c/game_print/hex_firewall_game_print.png?quality=80"
+    },
+    {
+      "id": "c38bcbb1-c113-4d3b-b081-127cf8b8c965",
+      "name": "Ivyrn",
+      "cost": 5,
+      "traits": {
+        "origins": [
+          {
+            "id": "d40b9771-29b0-4391-a9aa-41945682cd3a",
+            "name": "(E) Hero Party"
+          }
+        ],
+        "classes": [
+          {
+            "id": "5d1c9e89-e431-41dc-ae67-77dd8ee78170",
+            "name": "Archer"
+          }
+        ]
+      },
+      "image_url": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/hex_spirits/c38bcbb1-c113-4d3b-b081-127cf8b8c965/game_print/hex_ivyrn_game_print.png?quality=80"
+    },
+    {
+      "id": "5569a463-9147-4925-8316-dbad6c3c9f13",
+      "name": "Mintyheart",
+      "cost": 5,
+      "traits": {
+        "origins": [
+          {
+            "id": "d40b9771-29b0-4391-a9aa-41945682cd3a",
+            "name": "(E) Hero Party"
+          }
+        ],
+        "classes": [
+          {
+            "id": "aa90084b-a07a-4b00-9448-9f5dae83bd03",
+            "name": "Support"
+          }
+        ]
+      },
+      "image_url": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/hex_spirits/5569a463-9147-4925-8316-dbad6c3c9f13/game_print/hex_mintyheart_game_print.png?quality=80"
+    },
+    {
+      "id": "18154c10-1422-4655-a7cd-c637ac947916",
+      "name": "Beefender",
+      "cost": 3,
+      "traits": {
+        "origins": [
+          {
+            "id": "ad555f03-9b89-4a71-a47c-464fd67d2c05",
+            "name": "Floral Patch"
+          }
+        ],
+        "classes": [
+          {
+            "id": "aa90084b-a07a-4b00-9448-9f5dae83bd03",
+            "name": "Support"
+          }
+        ]
+      },
+      "image_url": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/hex_spirits/18154c10-1422-4655-a7cd-c637ac947916/game_print/hex_beefender_game_print.png?quality=80"
+    },
+    {
+      "id": "9707edd6-fbc3-4433-99f2-a687f39505fd",
+      "name": "CyberDive",
+      "cost": 3,
+      "traits": {
+        "origins": [
+          {
+            "id": "fa7db249-d99d-4c1d-a37d-9027c9f5a31e",
+            "name": "Cyber City"
+          }
+        ],
+        "classes": [
+          {
+            "id": "dd17c072-159c-4b43-831f-1f51bb8b7720",
+            "name": "Swordsman"
+          }
+        ]
+      },
+      "image_url": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/hex_spirits/9707edd6-fbc3-4433-99f2-a687f39505fd/game_print/hex_cyberdive_game_print.png?quality=80"
+    },
+    {
+      "id": "b8314d8f-ea32-44de-a3ad-62944e5ccecb",
+      "name": "Code Breaker",
+      "cost": 3,
+      "traits": {
+        "origins": [
+          {
+            "id": "fa7db249-d99d-4c1d-a37d-9027c9f5a31e",
+            "name": "Cyber City"
+          }
+        ],
+        "classes": [
+          {
+            "id": "5d1c9e89-e431-41dc-ae67-77dd8ee78170",
+            "name": "Archer"
+          }
+        ]
+      },
+      "image_url": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/hex_spirits/b8314d8f-ea32-44de-a3ad-62944e5ccecb/game_print/hex_code_breaker_game_print.png?quality=80"
+    },
+    {
+      "id": "80554b05-163d-4625-b3b9-b85bcac28ea8",
+      "name": "Prism Master",
+      "cost": 5,
+      "traits": {
+        "origins": [
+          {
+            "id": "82816408-d2e1-4e2c-9954-d9aea0bad324",
+            "name": "Arctic Nest"
+          }
+        ],
+        "classes": [
+          {
+            "id": "173589ed-9bec-4965-94e6-dadbc6b5310a",
+            "name": "Sorcerer"
+          }
+        ]
+      },
+      "image_url": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/hex_spirits/80554b05-163d-4625-b3b9-b85bcac28ea8/game_print/hex_prism_master_game_print.png?quality=80"
+    },
+    {
+      "id": "e24e9f91-7333-44c0-968e-15b900af3385",
+      "name": "Stellar Songbird",
+      "cost": 5,
+      "traits": {
+        "origins": [
+          {
+            "id": "9d4457d3-2a6c-4430-8c1b-1bf1bc20889a",
+            "name": "Astral Zone"
+          }
+        ],
+        "classes": [
+          {
+            "id": "f5438f3c-2052-4093-b402-893a45cf7046",
+            "name": "Animal"
+          }
+        ]
+      },
+      "image_url": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/hex_spirits/e24e9f91-7333-44c0-968e-15b900af3385/game_print/hex_stellar_songbird_game_print.png?quality=80"
+    },
+    {
+      "id": "1781a426-913b-4446-a062-a0ecfe401027",
+      "name": "Pond Girl",
+      "cost": 7,
+      "traits": {
+        "origins": [
+          {
+            "id": "294cee31-a7ac-4292-9b61-d4293c05c146",
+            "name": "Tidal Tribe"
+          },
+          {
+            "id": "294cee31-a7ac-4292-9b61-d4293c05c146",
+            "name": "Tidal Tribe"
+          }
+        ],
+        "classes": [
+          {
+            "id": "173589ed-9bec-4965-94e6-dadbc6b5310a",
+            "name": "Sorcerer"
+          },
+          {
+            "id": "173589ed-9bec-4965-94e6-dadbc6b5310a",
+            "name": "Sorcerer"
+          },
+          {
+            "id": "173589ed-9bec-4965-94e6-dadbc6b5310a",
+            "name": "Sorcerer"
+          }
+        ]
+      },
+      "image_url": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/hex_spirits/1781a426-913b-4446-a062-a0ecfe401027/game_print/hex_pond_girl_game_print.png?quality=80"
+    },
+    {
+      "id": "e95c775b-0677-4884-bc59-12ae2762ca8b",
+      "name": "Turtle",
+      "cost": 1,
+      "traits": {
+        "origins": [
+          {
+            "id": "294cee31-a7ac-4292-9b61-d4293c05c146",
+            "name": "Tidal Tribe"
+          },
+          {
+            "id": "294cee31-a7ac-4292-9b61-d4293c05c146",
+            "name": "Tidal Tribe"
+          }
+        ],
+        "classes": [
+          {
+            "id": "f5438f3c-2052-4093-b402-893a45cf7046",
+            "name": "Animal"
+          },
+          {
+            "id": "f5438f3c-2052-4093-b402-893a45cf7046",
+            "name": "Animal"
+          }
+        ]
+      },
+      "image_url": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/hex_spirits/e95c775b-0677-4884-bc59-12ae2762ca8b/game_print/hex_turtle_game_print.png?quality=80"
+    },
+    {
+      "id": "f3551976-672f-4b58-92ce-13f0a7c4f610",
+      "name": "Nyra",
+      "cost": 5,
+      "traits": {
+        "origins": [
+          {
+            "id": "d40b9771-29b0-4391-a9aa-41945682cd3a",
+            "name": "(E) Hero Party"
+          }
+        ],
+        "classes": [
+          {
+            "id": "173589ed-9bec-4965-94e6-dadbc6b5310a",
+            "name": "Sorcerer"
+          }
+        ]
+      },
+      "image_url": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/hex_spirits/f3551976-672f-4b58-92ce-13f0a7c4f610/game_print/hex_nyra_game_print.png?quality=80"
+    },
+    {
+      "id": "2f5275ec-bc27-4ec9-b24d-77b26d69e212",
+      "name": "Iceborne",
+      "cost": 9,
+      "traits": {
+        "origins": [
+          {
+            "id": "82816408-d2e1-4e2c-9954-d9aea0bad324",
+            "name": "Arctic Nest"
+          }
+        ],
+        "classes": [
+          {
+            "id": "91322cba-4201-48a3-86b1-2d6d034fce3f",
+            "name": "Special"
+          },
+          {
+            "id": "91322cba-4201-48a3-86b1-2d6d034fce3f",
+            "name": "Special"
+          },
+          {
+            "id": "91322cba-4201-48a3-86b1-2d6d034fce3f",
+            "name": "Special"
+          }
+        ]
+      },
+      "image_url": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/hex_spirits/2f5275ec-bc27-4ec9-b24d-77b26d69e212/game_print/hex_iceborne_game_print.png?quality=80"
+    }
+  ],
+  "artifacts": [
+    {
+      "id": "212c4455-aedf-4115-a477-c4b6fb7abb42",
+      "name": "Portable Forge",
+      "recipe_box": [
+        {
+          "rune_id": "7ca279f0-1ca8-484a-a86e-0a87aaa7b312",
+          "quantity": 3
+        }
+      ],
+      "guardian_id": "20112149-c8df-48b6-b508-5e9c39e87fc2",
+      "image_path": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/artifacts/212c4455-aedf-4115-a477-c4b6fb7abb42/card.png?quality=80",
+      "tag_ids": [
+        "381ae427-14a5-4dff-ab55-1d744f89136d"
+      ],
+      "tag_names": [
+        "Guardian"
+      ]
+    },
+    {
+      "id": "94b51fa5-c58e-4795-b28f-c96080f205aa",
+      "name": "Counter Operations",
+      "recipe_box": [
+        {
+          "rune_id": "356f3ad2-4cac-4b69-a3cc-7559f8891d8e",
+          "quantity": 1
+        },
+        {
+          "rune_id": "7ca279f0-1ca8-484a-a86e-0a87aaa7b312",
+          "quantity": 1
+        }
+      ],
+      "guardian_id": "fd8557f7-1cdc-4dde-9941-42b171992432",
+      "image_path": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/artifacts/94b51fa5-c58e-4795-b28f-c96080f205aa/card.png?quality=80",
+      "tag_ids": [
+        "381ae427-14a5-4dff-ab55-1d744f89136d"
+      ],
+      "tag_names": [
+        "Guardian"
+      ]
+    },
+    {
+      "id": "7ca8ab20-639c-438f-9870-5b13f6dd0177",
+      "name": "Particle Collector",
+      "recipe_box": [
+        {
+          "rune_id": "929fe4e3-ab41-4f7c-8bfd-44635752538c",
+          "quantity": 1
+        },
+        {
+          "rune_id": "7ca279f0-1ca8-484a-a86e-0a87aaa7b312",
+          "quantity": 2
+        }
+      ],
+      "guardian_id": "20ec3d5d-3fd8-4b5b-b75b-127acb325fff",
+      "image_path": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/artifacts/7ca8ab20-639c-438f-9870-5b13f6dd0177/card.png?quality=80",
+      "tag_ids": [
+        "381ae427-14a5-4dff-ab55-1d744f89136d"
+      ],
+      "tag_names": [
+        "Guardian"
+      ]
+    },
+    {
+      "id": "0c6366af-420e-4d32-8eb9-ed1767482bb7",
+      "name": "Trade Network",
+      "recipe_box": [
+        {
+          "rune_id": "7ca279f0-1ca8-484a-a86e-0a87aaa7b312",
+          "quantity": 2
+        }
+      ],
+      "guardian_id": "20112149-c8df-48b6-b508-5e9c39e87fc2",
+      "image_path": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/artifacts/0c6366af-420e-4d32-8eb9-ed1767482bb7/card.png?quality=80",
+      "tag_ids": [
+        "381ae427-14a5-4dff-ab55-1d744f89136d"
+      ],
+      "tag_names": [
+        "Guardian"
+      ]
+    },
+    {
+      "id": "d29f26f1-4888-45e1-8326-c7dc60bc337d",
+      "name": "Saving Tidal Tribe",
+      "recipe_box": [
+        {
+          "rune_id": "5eba8681-16b8-4563-b017-22c80a84b35b",
+          "quantity": 2
+        }
+      ],
+      "guardian_id": null,
+      "image_path": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/artifacts/d29f26f1-4888-45e1-8326-c7dc60bc337d/card.png?quality=80",
+      "tag_ids": [
+        "0580d32c-e21e-405c-9925-812e19084542"
+      ],
+      "tag_names": [
+        "Basic"
+      ]
+    },
+    {
+      "id": "3dce46e5-7a66-493b-a435-4cbbf2bd72e8",
+      "name": "Star Station",
+      "recipe_box": [
+        {
+          "rune_id": "7ca279f0-1ca8-484a-a86e-0a87aaa7b312",
+          "quantity": 2
+        },
+        {
+          "rune_id": "929fe4e3-ab41-4f7c-8bfd-44635752538c",
+          "quantity": 1
+        }
+      ],
+      "guardian_id": null,
+      "image_path": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/artifacts/3dce46e5-7a66-493b-a435-4cbbf2bd72e8/card.png?quality=80",
+      "tag_ids": [
+        "3ea13637-92ed-47b7-a606-a85477d275b4"
+      ],
+      "tag_names": [
+        "Legendary"
+      ]
+    },
+    {
+      "id": "cfde8515-bb33-403c-a614-f6a8b5472e4e",
+      "name": "Saving Floral Patch",
+      "recipe_box": [
+        {
+          "rune_id": "34b2a963-f8c6-4fc0-8272-ddc50b0036a8",
+          "quantity": 2
+        }
+      ],
+      "guardian_id": null,
+      "image_path": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/artifacts/cfde8515-bb33-403c-a614-f6a8b5472e4e/card.png?quality=80",
+      "tag_ids": [
+        "0580d32c-e21e-405c-9925-812e19084542"
+      ],
+      "tag_names": [
+        "Basic"
+      ]
+    },
+    {
+      "id": "7315001b-84e8-4533-9038-aa2d89066bce",
+      "name": "Void Remnants",
+      "recipe_box": [],
+      "guardian_id": null,
+      "image_path": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/artifacts/7315001b-84e8-4533-9038-aa2d89066bce/card.png?quality=80",
+      "tag_ids": [
+        "0580d32c-e21e-405c-9925-812e19084542"
+      ],
+      "tag_names": [
+        "Basic"
+      ]
+    },
+    {
+      "id": "01a22838-212b-4176-99c8-4a09398529ec",
+      "name": "Twilight Fairies Remnants",
+      "recipe_box": [],
+      "guardian_id": null,
+      "image_path": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/artifacts/01a22838-212b-4176-99c8-4a09398529ec/card.png?quality=80",
+      "tag_ids": [
+        "0580d32c-e21e-405c-9925-812e19084542"
+      ],
+      "tag_names": [
+        "Basic"
+      ]
+    },
+    {
+      "id": "3260ca51-d0ff-4242-b156-ea9a276d9804",
+      "name": "Strategic Sacrifice",
+      "recipe_box": [
+        {
+          "rune_id": "b9607847-d00b-4578-906b-7cb0b9b9c9a4",
+          "quantity": 1
+        }
+      ],
+      "guardian_id": "9cb13598-1b9f-47a6-b86c-c687665b3eb5",
+      "image_path": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/artifacts/3260ca51-d0ff-4242-b156-ea9a276d9804/card.png?quality=80",
+      "tag_ids": [
+        "381ae427-14a5-4dff-ab55-1d744f89136d"
+      ],
+      "tag_names": [
+        "Guardian"
+      ]
+    },
+    {
+      "id": "36e1258b-b195-4944-a18c-c6446155d34a",
+      "name": "Tax Collector",
+      "recipe_box": [
+        {
+          "rune_id": "a36f2af9-3c8c-4265-939c-62bd2e12e878",
+          "quantity": 1
+        },
+        {
+          "rune_id": "7ca279f0-1ca8-484a-a86e-0a87aaa7b312",
+          "quantity": 1
+        }
+      ],
+      "guardian_id": "c17484dc-741b-4e9b-9ece-6581c2095fe1",
+      "image_path": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/artifacts/36e1258b-b195-4944-a18c-c6446155d34a/card.png?quality=80",
+      "tag_ids": [
+        "381ae427-14a5-4dff-ab55-1d744f89136d"
+      ],
+      "tag_names": [
+        "Guardian"
+      ]
+    },
+    {
+      "id": "531abb72-7f9b-4af2-a7a5-60151dd79c6e",
+      "name": "Royal Prestige",
+      "recipe_box": [
+        {
+          "rune_id": "a36f2af9-3c8c-4265-939c-62bd2e12e878",
+          "quantity": 1
+        },
+        {
+          "rune_id": "7ca279f0-1ca8-484a-a86e-0a87aaa7b312",
+          "quantity": 2
+        }
+      ],
+      "guardian_id": "c17484dc-741b-4e9b-9ece-6581c2095fe1",
+      "image_path": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/artifacts/531abb72-7f9b-4af2-a7a5-60151dd79c6e/card.png?quality=80",
+      "tag_ids": [
+        "381ae427-14a5-4dff-ab55-1d744f89136d"
+      ],
+      "tag_names": [
+        "Guardian"
+      ]
+    },
+    {
+      "id": "d35d06b4-0feb-49d2-aa9d-27956bce3d5a",
+      "name": "Art of War",
+      "recipe_box": [
+        {
+          "rune_id": "7ca279f0-1ca8-484a-a86e-0a87aaa7b312",
+          "quantity": 3
+        },
+        {
+          "rune_id": "b395bf12-3e7d-49b7-a5cb-293b25002919",
+          "quantity": 1
+        }
+      ],
+      "guardian_id": null,
+      "image_path": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/artifacts/d35d06b4-0feb-49d2-aa9d-27956bce3d5a/card.png?quality=80",
+      "tag_ids": [
+        "3ea13637-92ed-47b7-a606-a85477d275b4"
+      ],
+      "tag_names": [
+        "Legendary"
+      ]
+    },
+    {
+      "id": "ea170cbb-5dd9-4af0-9f53-6fcf62998562",
+      "name": "Empty Space",
+      "recipe_box": [
+        {
+          "rune_id": "b395bf12-3e7d-49b7-a5cb-293b25002919",
+          "quantity": 2
+        }
+      ],
+      "guardian_id": "2d8d81ec-5b43-4b2b-b8b4-a69e7fca8496",
+      "image_path": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/artifacts/ea170cbb-5dd9-4af0-9f53-6fcf62998562/card.png?quality=80",
+      "tag_ids": [
+        "381ae427-14a5-4dff-ab55-1d744f89136d"
+      ],
+      "tag_names": [
+        "Guardian"
+      ]
+    },
+    {
+      "id": "3c4c073b-62dc-4376-8123-9c4462d8938c",
+      "name": "Saving Lantern Lights",
+      "recipe_box": [
+        {
+          "rune_id": "480cd5f7-adea-481d-8ea9-aad776599d7b",
+          "quantity": 2
+        }
+      ],
+      "guardian_id": null,
+      "image_path": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/artifacts/3c4c073b-62dc-4376-8123-9c4462d8938c/card.png?quality=80",
+      "tag_ids": [
+        "0580d32c-e21e-405c-9925-812e19084542"
+      ],
+      "tag_names": [
+        "Basic"
+      ]
+    },
+    {
+      "id": "5749ed99-2b30-4b77-89d7-1c5c7b3dc3ca",
+      "name": "Saving Arctic Nest",
+      "recipe_box": [
+        {
+          "rune_id": "e9e912c2-98bd-4869-b8b2-5089bc037ac7",
+          "quantity": 2
+        }
+      ],
+      "guardian_id": null,
+      "image_path": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/artifacts/5749ed99-2b30-4b77-89d7-1c5c7b3dc3ca/card.png?quality=80",
+      "tag_ids": [
+        "0580d32c-e21e-405c-9925-812e19084542"
+      ],
+      "tag_names": [
+        "Basic"
+      ]
+    },
+    {
+      "id": "e6c66606-8214-4a48-bdd1-3e44ecc688f5",
+      "name": "Saving Cyber City",
+      "recipe_box": [
+        {
+          "rune_id": "356f3ad2-4cac-4b69-a3cc-7559f8891d8e",
+          "quantity": 2
+        }
+      ],
+      "guardian_id": null,
+      "image_path": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/artifacts/e6c66606-8214-4a48-bdd1-3e44ecc688f5/card.png?quality=80",
+      "tag_ids": [
+        "0580d32c-e21e-405c-9925-812e19084542"
+      ],
+      "tag_names": [
+        "Basic"
+      ]
+    },
+    {
+      "id": "7858af5e-4830-4c95-baaf-b59a220f07a0",
+      "name": "Fairy Intervention",
+      "recipe_box": [
+        {
+          "rune_id": "b0fce6aa-282e-48ed-bc14-39ce250b3dd0",
+          "quantity": 1
+        },
+        {
+          "rune_id": "7ca279f0-1ca8-484a-a86e-0a87aaa7b312",
+          "quantity": 2
+        }
+      ],
+      "guardian_id": "8ce23995-bb31-4be8-8fd6-fda19d1f430a",
+      "image_path": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/artifacts/7858af5e-4830-4c95-baaf-b59a220f07a0/card.png?quality=80",
+      "tag_ids": [
+        "381ae427-14a5-4dff-ab55-1d744f89136d"
+      ],
+      "tag_names": [
+        "Guardian"
+      ]
+    },
+    {
+      "id": "e17e8c51-b4cd-4ba7-8924-5cf8c8199fde",
+      "name": "Floral Barrier",
+      "recipe_box": [
+        {
+          "rune_id": "34b2a963-f8c6-4fc0-8272-ddc50b0036a8",
+          "quantity": 1
+        },
+        {
+          "rune_id": "7ca279f0-1ca8-484a-a86e-0a87aaa7b312",
+          "quantity": 1
+        }
+      ],
+      "guardian_id": "3267074b-4f61-457c-b406-12ccf43d068a",
+      "image_path": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/artifacts/e17e8c51-b4cd-4ba7-8924-5cf8c8199fde/card.png?quality=80",
+      "tag_ids": [
+        "381ae427-14a5-4dff-ab55-1d744f89136d"
+      ],
+      "tag_names": [
+        "Guardian"
+      ]
+    },
+    {
+      "id": "84f5bfbc-105c-465a-9d93-fd8931562e47",
+      "name": "Battle Magic",
+      "recipe_box": [
+        {
+          "rune_id": "b0fce6aa-282e-48ed-bc14-39ce250b3dd0",
+          "quantity": 1
+        },
+        {
+          "rune_id": "7ca279f0-1ca8-484a-a86e-0a87aaa7b312",
+          "quantity": 2
+        }
+      ],
+      "guardian_id": "8ce23995-bb31-4be8-8fd6-fda19d1f430a",
+      "image_path": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/artifacts/84f5bfbc-105c-465a-9d93-fd8931562e47/card.png?quality=80",
+      "tag_ids": [
+        "381ae427-14a5-4dff-ab55-1d744f89136d"
+      ],
+      "tag_names": [
+        "Guardian"
+      ]
+    },
+    {
+      "id": "8b060d74-bca9-4c50-896c-c483dd767ac3",
+      "name": "Cyber City Remnants",
+      "recipe_box": [],
+      "guardian_id": null,
+      "image_path": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/artifacts/8b060d74-bca9-4c50-896c-c483dd767ac3/card.png?quality=80",
+      "tag_ids": [
+        "0580d32c-e21e-405c-9925-812e19084542"
+      ],
+      "tag_names": [
+        "Basic"
+      ]
+    },
+    {
+      "id": "48a45722-5449-4cf7-a8d0-08fb04f64d83",
+      "name": "Astral Zone Remnants",
+      "recipe_box": [],
+      "guardian_id": null,
+      "image_path": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/artifacts/48a45722-5449-4cf7-a8d0-08fb04f64d83/card.png?quality=80",
+      "tag_ids": [
+        "0580d32c-e21e-405c-9925-812e19084542"
+      ],
+      "tag_names": [
+        "Basic"
+      ]
+    },
+    {
+      "id": "0569df2e-ff43-4679-8b10-83e259a120a6",
+      "name": "Underground Lights Remnants",
+      "recipe_box": [],
+      "guardian_id": null,
+      "image_path": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/artifacts/0569df2e-ff43-4679-8b10-83e259a120a6/card.png?quality=80",
+      "tag_ids": [
+        "0580d32c-e21e-405c-9925-812e19084542"
+      ],
+      "tag_names": [
+        "Basic"
+      ]
+    },
+    {
+      "id": "4daad1e9-fb0e-494d-8bf7-af33b46cc6af",
+      "name": "Floral Patch Remnants",
+      "recipe_box": [],
+      "guardian_id": null,
+      "image_path": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/artifacts/4daad1e9-fb0e-494d-8bf7-af33b46cc6af/card.png?quality=80",
+      "tag_ids": [
+        "0580d32c-e21e-405c-9925-812e19084542"
+      ],
+      "tag_names": [
+        "Basic"
+      ]
+    },
+    {
+      "id": "2235345d-03d4-4eb7-8168-d90839efadf9",
+      "name": "Tidal Tribe Remnants",
+      "recipe_box": [],
+      "guardian_id": null,
+      "image_path": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/artifacts/2235345d-03d4-4eb7-8168-d90839efadf9/card.png?quality=80",
+      "tag_ids": [
+        "0580d32c-e21e-405c-9925-812e19084542"
+      ],
+      "tag_names": [
+        "Basic"
+      ]
+    },
+    {
+      "id": "bfef2d25-1638-450e-a671-921f3cddda35",
+      "name": "Arctic Nest Remnants",
+      "recipe_box": [],
+      "guardian_id": null,
+      "image_path": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/artifacts/bfef2d25-1638-450e-a671-921f3cddda35/card.png?quality=80",
+      "tag_ids": [
+        "0580d32c-e21e-405c-9925-812e19084542"
+      ],
+      "tag_names": [
+        "Basic"
+      ]
+    },
+    {
+      "id": "5b57f9b8-5297-469f-b61c-558135bab446",
+      "name": "Advanced Weapons",
+      "recipe_box": [
+        {
+          "rune_id": "b9607847-d00b-4578-906b-7cb0b9b9c9a4",
+          "quantity": 1
+        },
+        {
+          "rune_id": "7ca279f0-1ca8-484a-a86e-0a87aaa7b312",
+          "quantity": 2
+        }
+      ],
+      "guardian_id": "9cb13598-1b9f-47a6-b86c-c687665b3eb5",
+      "image_path": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/artifacts/5b57f9b8-5297-469f-b61c-558135bab446/card.png?quality=80",
+      "tag_ids": [
+        "381ae427-14a5-4dff-ab55-1d744f89136d"
+      ],
+      "tag_names": [
+        "Guardian"
+      ]
+    },
+    {
+      "id": "be1f6921-1ab6-43dc-bc5e-8782b0b53fa8",
+      "name": "Arcane Master",
+      "recipe_box": [
+        {
+          "rune_id": "7ca279f0-1ca8-484a-a86e-0a87aaa7b312",
+          "quantity": 3
+        },
+        {
+          "rune_id": "929fe4e3-ab41-4f7c-8bfd-44635752538c",
+          "quantity": 1
+        }
+      ],
+      "guardian_id": null,
+      "image_path": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/artifacts/be1f6921-1ab6-43dc-bc5e-8782b0b53fa8/card.png?quality=80",
+      "tag_ids": [
+        "3ea13637-92ed-47b7-a606-a85477d275b4"
+      ],
+      "tag_names": [
+        "Legendary"
+      ]
+    },
+    {
+      "id": "1bd336be-edd1-4949-bf74-9cd79be124dd",
+      "name": "Void Barrier",
+      "recipe_box": [
+        {
+          "rune_id": "b395bf12-3e7d-49b7-a5cb-293b25002919",
+          "quantity": 1
+        },
+        {
+          "rune_id": "7ca279f0-1ca8-484a-a86e-0a87aaa7b312",
+          "quantity": 2
+        }
+      ],
+      "guardian_id": "2d8d81ec-5b43-4b2b-b8b4-a69e7fca8496",
+      "image_path": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/artifacts/1bd336be-edd1-4949-bf74-9cd79be124dd/card.png?quality=80",
+      "tag_ids": [
+        "381ae427-14a5-4dff-ab55-1d744f89136d"
+      ],
+      "tag_names": [
+        "Guardian"
+      ]
+    },
+    {
+      "id": "5351bc0f-3b59-4ffe-b4f1-aa6155da413b",
+      "name": "Fairy-Scented Candle",
+      "recipe_box": [
+        {
+          "rune_id": "b0fce6aa-282e-48ed-bc14-39ce250b3dd0",
+          "quantity": 1
+        },
+        {
+          "rune_id": "7ca279f0-1ca8-484a-a86e-0a87aaa7b312",
+          "quantity": 2
+        }
+      ],
+      "guardian_id": null,
+      "image_path": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/artifacts/5351bc0f-3b59-4ffe-b4f1-aa6155da413b/card.png?quality=80",
+      "tag_ids": [
+        "3ea13637-92ed-47b7-a606-a85477d275b4"
+      ],
+      "tag_names": [
+        "Legendary"
+      ]
+    },
+    {
+      "id": "8dc56cec-95b0-4e6c-a693-0a01246ec9cd",
+      "name": "Quantum Enhancement",
+      "recipe_box": [
+        {
+          "rune_id": "356f3ad2-4cac-4b69-a3cc-7559f8891d8e",
+          "quantity": 1
+        },
+        {
+          "rune_id": "7ca279f0-1ca8-484a-a86e-0a87aaa7b312",
+          "quantity": 1
+        },
+        {
+          "rune_id": "b395bf12-3e7d-49b7-a5cb-293b25002919",
+          "quantity": 1
+        }
+      ],
+      "guardian_id": null,
+      "image_path": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/artifacts/8dc56cec-95b0-4e6c-a693-0a01246ec9cd/card.png?quality=80",
+      "tag_ids": [
+        "3ea13637-92ed-47b7-a606-a85477d275b4"
+      ],
+      "tag_names": [
+        "Legendary"
+      ]
+    },
+    {
+      "id": "02711c63-f555-4fa7-97de-3fbec11bda19",
+      "name": "Astral Gateway",
+      "recipe_box": [
+        {
+          "rune_id": "929fe4e3-ab41-4f7c-8bfd-44635752538c",
+          "quantity": 1
+        },
+        {
+          "rune_id": "7ca279f0-1ca8-484a-a86e-0a87aaa7b312",
+          "quantity": 1
+        }
+      ],
+      "guardian_id": "20ec3d5d-3fd8-4b5b-b75b-127acb325fff",
+      "image_path": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/artifacts/02711c63-f555-4fa7-97de-3fbec11bda19/card.png?quality=80",
+      "tag_ids": [
+        "381ae427-14a5-4dff-ab55-1d744f89136d"
+      ],
+      "tag_names": [
+        "Guardian"
+      ]
+    },
+    {
+      "id": "3d4d5edf-f8d7-4724-bd1f-551c8f152148",
+      "name": "Regrowth",
+      "recipe_box": [
+        {
+          "rune_id": "34b2a963-f8c6-4fc0-8272-ddc50b0036a8",
+          "quantity": 1
+        },
+        {
+          "rune_id": "7ca279f0-1ca8-484a-a86e-0a87aaa7b312",
+          "quantity": 1
+        }
+      ],
+      "guardian_id": "3267074b-4f61-457c-b406-12ccf43d068a",
+      "image_path": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/artifacts/3d4d5edf-f8d7-4724-bd1f-551c8f152148/card.png?quality=80",
+      "tag_ids": [
+        "381ae427-14a5-4dff-ab55-1d744f89136d"
+      ],
+      "tag_names": [
+        "Guardian"
+      ]
+    },
+    {
+      "id": "91f723ef-2f5e-4b2a-8e8f-a57c8ada86a8",
+      "name": "Cyber Attacks",
+      "recipe_box": [
+        {
+          "rune_id": "356f3ad2-4cac-4b69-a3cc-7559f8891d8e",
+          "quantity": 1
+        },
+        {
+          "rune_id": "7ca279f0-1ca8-484a-a86e-0a87aaa7b312",
+          "quantity": 2
+        }
+      ],
+      "guardian_id": "fd8557f7-1cdc-4dde-9941-42b171992432",
+      "image_path": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/artifacts/91f723ef-2f5e-4b2a-8e8f-a57c8ada86a8/card.png?quality=80",
+      "tag_ids": [
+        "381ae427-14a5-4dff-ab55-1d744f89136d"
+      ],
+      "tag_names": [
+        "Guardian"
+      ]
+    }
+  ],
+  "boards": [
+    {
+      "id": "bead9dfd-a691-4df6-a555-32918317f15f",
+      "name": "Arcane Abyss",
+      "file_type": "image/png",
+      "file_size": "4369881",
+      "image_url": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/misc_assets/map/arcane_abyss_1763772791430.png?quality=80"
+    },
+    {
+      "id": "09a6fa6d-55ad-4628-86ec-1993863e61a0",
+      "name": "SpiritWorld",
+      "file_type": "image/png",
+      "file_size": "24539452",
+      "image_url": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/misc_assets/09a6fa6d-55ad-4628-86ec-1993863e61a0/map_vf.png?quality=80"
+    },
+    {
+      "id": "e582bc0d-1f70-4df1-995e-47e9b33b9ce8",
+      "name": "relationship_board",
+      "file_type": "image/png",
+      "file_size": "139463",
+      "image_url": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/misc_assets/e582bc0d-1f70-4df1-995e-47e9b33b9ce8/friendship.png?quality=80"
+    },
+    {
+      "id": "be45b6e1-6011-4dd3-8a8e-5603c4ed36d3",
+      "name": "d12",
+      "file_type": "image/png",
+      "file_size": "708592",
+      "image_url": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/misc_assets/a3e10c1d-bba0-447e-b10b-45bb7b79d582/D12.png?quality=80"
+    },
+    {
+      "id": "e1f25e0a-96e9-4ee4-9e5e-c8373f81d9c4",
+      "name": "reference_sheet",
+      "file_type": "image/png",
+      "file_size": "496162",
+      "image_url": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/misc_assets/d6799a5c-4384-495d-8919-b3499164c750/Screenshot_2025-11-25_at_9.26.15_AM.png?quality=80"
+    }
+  ],
+  "monsters": [
+    {
+      "id": "4ea5446e-75be-4b9b-8a32-298c577d2ee8",
+      "name": "Darkness Stirs",
+      "type": "event",
+      "state": "event",
+      "barrier": null,
+      "damage": null,
+      "order_num": 0,
+      "image_url": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/events/4ea5446e-75be-4b9b-8a32-298c577d2ee8/card.png?quality=80",
+      "event_name": "event_intro",
+      "description": "A strange energy emanates from the depths. The Arcane Synthesizer has begun its work, and twisted creatures emerge from the shadows."
+    },
+    {
+      "id": "ef719d3b-4ef8-4c12-88af-ff046ea5e2c0",
+      "name": "Blightbloom",
+      "type": "monster",
+      "state": "tainted",
+      "barrier": 1,
+      "damage": 3,
+      "order_num": 1,
+      "image_url": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/monsters/ef719d3b-4ef8-4c12-88af-ff046ea5e2c0/card.png?quality=80"
+    },
+    {
+      "id": "af697a5c-3235-4ac5-896c-b565573c2fda",
+      "name": "Rotvine Fox",
+      "type": "monster",
+      "state": "tainted",
+      "barrier": 2,
+      "damage": 3,
+      "order_num": 2,
+      "image_url": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/monsters/af697a5c-3235-4ac5-896c-b565573c2fda/card.png?quality=80"
+    },
+    {
+      "id": "aa54c7b3-5124-4d30-8043-83f2bc472a46",
+      "name": "Tarnish Hound",
+      "type": "monster",
+      "state": "tainted",
+      "barrier": 1,
+      "damage": 3,
+      "order_num": 3,
+      "image_url": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/monsters/aa54c7b3-5124-4d30-8043-83f2bc472a46/card.png?quality=80"
+    },
+    {
+      "id": "c9e2f4e3-0609-4b73-8f5a-6b0bd12246a8",
+      "name": "Corruption Awakens",
+      "type": "event",
+      "state": "event",
+      "barrier": null,
+      "damage": null,
+      "order_num": 5,
+      "image_url": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/events/c9e2f4e3-0609-4b73-8f5a-6b0bd12246a8/card.png?quality=80",
+      "event_name": "event_tainted_to_corrupt",
+      "description": "The Arcane Synthesizer pulses with dark energy. All players loose 2 barriers, and gain 1 Arcane Droplet."
+    },
+    {
+      "id": "665f725c-a1e3-4349-aea3-f70cb20f3ce5",
+      "name": "Firewall Warden",
+      "type": "monster",
+      "state": "corrupt",
+      "barrier": 4,
+      "damage": 4,
+      "order_num": 6,
+      "image_url": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/monsters/665f725c-a1e3-4349-aea3-f70cb20f3ce5/card.png?quality=80"
+    },
+    {
+      "id": "fe8e0a9f-c314-485f-8e25-cd5c02872a14",
+      "name": "Glitchfang",
+      "type": "monster",
+      "state": "corrupt",
+      "barrier": 3,
+      "damage": 4,
+      "order_num": 7,
+      "image_url": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/monsters/fe8e0a9f-c314-485f-8e25-cd5c02872a14/card.png?quality=80"
+    },
+    {
+      "id": "b9ed1e0d-6b1a-4b96-a71b-d1d93031c781",
+      "name": "Void Howler",
+      "type": "monster",
+      "state": "corrupt",
+      "barrier": 4,
+      "damage": 4,
+      "order_num": 8,
+      "image_url": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/monsters/b9ed1e0d-6b1a-4b96-a71b-d1d93031c781/card.png?quality=80"
+    },
+    {
+      "id": "6dd4ed36-6f7a-4686-bd76-d4a1d1afbb68",
+      "name": "Arcane Alchemist",
+      "type": "event",
+      "state": "event",
+      "barrier": null,
+      "damage": null,
+      "order_num": 10,
+      "image_url": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/events/6dd4ed36-6f7a-4686-bd76-d4a1d1afbb68/card.png?quality=80",
+      "event_name": "event_corrupt_to_fallen",
+      "description": "The Abyss Alchemist appears with his Fallen Defenders. All players may go to this location, and trade 2 Arcane Droplets or ALL your barriers for 1 of any Rune from the supply. No combat may take place here."
+    },
+    {
+      "id": "4680adab-a713-4614-a0c8-9bb8f3f499a7",
+      "name": "Dimmed Edge",
+      "type": "monster",
+      "state": "fallen",
+      "barrier": 4,
+      "damage": 4,
+      "order_num": 11,
+      "image_url": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/monsters/4680adab-a713-4614-a0c8-9bb8f3f499a7/card.png?quality=80"
+    },
+    {
+      "id": "c58f8d5a-5cef-49ea-8c7d-cd2c52ab737f",
+      "name": "Fallen Cherub",
+      "type": "monster",
+      "state": "fallen",
+      "barrier": 4,
+      "damage": 4,
+      "order_num": 12,
+      "image_url": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/monsters/c58f8d5a-5cef-49ea-8c7d-cd2c52ab737f/card.png?quality=80"
+    },
+    {
+      "id": "eb706a68-a444-444a-88d0-c9c11b6d8e90",
+      "name": "Idle Caster",
+      "type": "monster",
+      "state": "fallen",
+      "barrier": 5,
+      "damage": 4,
+      "order_num": 13,
+      "image_url": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/monsters/eb706a68-a444-444a-88d0-c9c11b6d8e90/card.png?quality=80"
+    },
+    {
+      "id": "4cc337b2-bcfb-4262-85d2-291cdc4a3415",
+      "name": "Shadow Idolater",
+      "type": "monster",
+      "state": "fallen",
+      "barrier": 5,
+      "damage": 4,
+      "order_num": 14,
+      "image_url": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/monsters/4cc337b2-bcfb-4262-85d2-291cdc4a3415/card.png?quality=80"
+    },
+    {
+      "id": "b18c1f8a-648e-4dae-966b-49c1fbb5767a",
+      "name": "Arcane Creation",
+      "type": "monster",
+      "state": "boss",
+      "barrier": 16,
+      "damage": 3,
+      "order_num": 17,
+      "image_url": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/monsters/b18c1f8a-648e-4dae-966b-49c1fbb5767a/card.png?quality=80"
+    },
+    {
+      "id": "bef6e446-3d0f-434c-a5e0-29021dbe93db",
+      "name": "Abyss Tragedy",
+      "type": "event",
+      "state": "event",
+      "barrier": null,
+      "damage": null,
+      "order_num": 18,
+      "image_url": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/events/bef6e446-3d0f-434c-a5e0-29021dbe93db/card.png?quality=80",
+      "event_name": "event_respite",
+      "description": "The Arcane Creation explodes, injuring all players in the abyss. All players in the abyss loose 4 barriers, but gain 2 Arcane Droplets."
+    },
+    {
+      "id": "8a0fb926-35a1-452a-9317-20e373c50a8f",
+      "name": "Arcane Synthesizer",
+      "type": "monster",
+      "state": "boss",
+      "barrier": 12,
+      "damage": 5,
+      "order_num": 19,
+      "image_url": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/monsters/8a0fb926-35a1-452a-9317-20e373c50a8f/card.png?quality=80"
+    }
+  ],
+  "guardians": [
+    {
+      "name": "Arcane Avatar",
+      "origin_id": "d459ae53-da95-4323-b348-6720e52643d4",
+      "origin_name": "Lost",
+      "mat_image_url": null,
+      "chibi_image_url": null,
+      "icon_image_url": null
+    },
+    {
+      "name": "Human Avatar",
+      "origin_id": "48e4acb4-ee9e-42ea-ba82-70165770c368",
+      "origin_name": "Human Enclave",
+      "mat_image_url": null,
+      "chibi_image_url": null,
+      "icon_image_url": null
+    },
+    {
+      "name": "Void Avatar",
+      "origin_id": "27531555-353f-49be-b05e-e78f35e0a7b3",
+      "origin_name": "Void",
+      "mat_image_url": null,
+      "chibi_image_url": null,
+      "icon_image_url": null
+    },
+    {
+      "name": "Bubblepop",
+      "origin_id": "fa7db249-d99d-4c1d-a37d-9027c9f5a31e",
+      "origin_name": "Cyber City",
+      "mat_image_url": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/guardians/fd8557f7-1cdc-4dde-9941-42b171992432/guardian_cypher_image_mat.png?quality=80",
+      "chibi_image_url": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/guardians/fd8557f7-1cdc-4dde-9941-42b171992432/guardian_cypher_chibi.png?quality=80",
+      "icon_image_url": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/guardians/fd8557f7-1cdc-4dde-9941-42b171992432/guardian_cypher_icon.png?quality=80"
+    },
+    {
+      "name": "Prox",
+      "origin_id": "59d3e23e-c7fd-48f9-911d-b8a306029404",
+      "origin_name": "(E) Royal Family",
+      "mat_image_url": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/guardians/c17484dc-741b-4e9b-9ece-6581c2095fe1/guardian_prox_image_mat.png?quality=80",
+      "chibi_image_url": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/guardians/c17484dc-741b-4e9b-9ece-6581c2095fe1/guardian_prox_chibi.png?quality=80",
+      "icon_image_url": null
+    },
+    {
+      "name": "Myrtle",
+      "origin_id": "ad555f03-9b89-4a71-a47c-464fd67d2c05",
+      "origin_name": "Floral Patch",
+      "mat_image_url": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/guardians/3267074b-4f61-457c-b406-12ccf43d068a/guardian_myrtle_image_mat.png?quality=80",
+      "chibi_image_url": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/guardians/3267074b-4f61-457c-b406-12ccf43d068a/guardian_myrtle_chibi.png?quality=80",
+      "icon_image_url": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/guardians/3267074b-4f61-457c-b406-12ccf43d068a/guardian_myrtle_icon.png?quality=80"
+    },
+    {
+      "name": "Embers",
+      "origin_id": "178449e9-cc6b-45ab-8522-5183fe1d9307",
+      "origin_name": "Lantern Lights",
+      "mat_image_url": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/guardians/20112149-c8df-48b6-b508-5e9c39e87fc2/guardian_embers_image_mat.png?quality=80",
+      "chibi_image_url": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/guardians/20112149-c8df-48b6-b508-5e9c39e87fc2/guardian_embers_chibi.png?quality=80",
+      "icon_image_url": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/guardians/20112149-c8df-48b6-b508-5e9c39e87fc2/guardian_embers_icon.png?quality=80"
+    },
+    {
+      "name": "Lumina",
+      "origin_id": "9d4457d3-2a6c-4430-8c1b-1bf1bc20889a",
+      "origin_name": "Astral Zone",
+      "mat_image_url": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/guardians/20ec3d5d-3fd8-4b5b-b75b-127acb325fff/guardian_lumina_image_mat.png?quality=80",
+      "chibi_image_url": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/guardians/20ec3d5d-3fd8-4b5b-b75b-127acb325fff/guardian_lumina_chibi.png?quality=80",
+      "icon_image_url": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/guardians/20ec3d5d-3fd8-4b5b-b75b-127acb325fff/guardian_lumina_icon.png?quality=80"
+    },
+    {
+      "name": "Pixia",
+      "origin_id": "b4a04571-548d-4572-a6a8-0b85c39316d3",
+      "origin_name": "Twilight Fairies",
+      "mat_image_url": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/guardians/8ce23995-bb31-4be8-8fd6-fda19d1f430a/guardian_pixia_image_mat.png?quality=80",
+      "chibi_image_url": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/guardians/8ce23995-bb31-4be8-8fd6-fda19d1f430a/guardian_pixia_chibi.png?quality=80",
+      "icon_image_url": "https://gvxfokbptelmvvlxbigh.supabase.co/storage/v1/render/image/public/game_assets/guardians/8ce23995-bb31-4be8-8fd6-fda19d1f430a/guardian_pixia_icon.png?quality=80"
+    }
+  ]
+}

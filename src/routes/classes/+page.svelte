@@ -12,7 +12,9 @@
 	} from '$lib/types/effects';
 	import html2canvas from 'html2canvas';
 	import jsPDF from 'jspdf';
-	import { EditorModal } from '$lib';
+import { supabase } from '$lib/api/supabaseClient';
+import { EditorModal } from '$lib';
+import CardActionMenu from '$lib/components/CardActionMenu.svelte';
 	import {
 		classRowToForm,
 		createEffect,
@@ -22,17 +24,29 @@
 		fetchClassRecords,
 		formatEffectSummary,
 		parseEffectSchema,
-		parsePrismaticJson,
-		saveClassRecord,
-		EMPTY_PRISMATIC,
-		type ClassFormData,
-		type PrismaticForm
-	} from '$lib/features/classes/classes';
-	import { fetchDiceRecords } from '$lib/features/dice/dice';
+	parsePrismaticJson,
+	saveClassRecord,
+	EMPTY_PRISMATIC,
+	type ClassFormData,
+	type PrismaticForm
+} from '$lib/features/classes/classes';
+import {
+	fetchSpecialCategoryRecords,
+	saveSpecialCategoryRecord,
+	deleteSpecialCategoryRecord,
+	emptySpecialCategoryForm,
+	specialCategoryRowToForm,
+	type SpecialCategoryFormData
+} from '$lib/features/special-categories/specialCategories';
+import type { SpecialCategoryRow } from '$lib/types/gameData';
+import { fetchDiceRecords } from '$lib/features/dice/dice';
+import { emojiToPngBlob } from '$lib/utils/emojiToPng';
 
-	let classes: ClassRow[] = [];
-	let loading = true;
-	let error: string | null = null;
+let classes: ClassRow[] = [];
+let specialCategories: SpecialCategoryRow[] = [];
+let loading = true;
+let error: string | null = null;
+let backfillingIcons = false;
 
 	let search = '';
 
@@ -43,46 +57,211 @@
 	let prismaticEnabled = false;
 	let prismaticCache: PrismaticForm = { ...EMPTY_PRISMATIC };
 	const getPrismatic = parsePrismaticJson;
-	let diceOptions: { id: string; name: string }[] = [];
-	const diceNameById = new Map<string, string>();
-	const resolveDiceLabel = (id: string | null | undefined, fallback?: string) => {
-		if (id && diceNameById.has(id)) return diceNameById.get(id) ?? fallback ?? 'Custom dice';
-		return fallback ?? (id ?? 'Custom dice');
-	};
-	const summarizeEffect = (effect: Effect) => formatEffectSummary(effect, resolveDiceLabel);
 
-	function resolveDiceIdsInSchema(schema: EffectBreakpoint[]): EffectBreakpoint[] {
-		if (!diceOptions.length) return schema;
-		return schema.map((bp) => ({
-			...bp,
-			effects: bp.effects.map((effect) => {
-				if (effect.type !== 'dice') return effect;
-				const typed = effect as DiceEffect;
-				if (typed.dice_id && diceNameById.has(typed.dice_id)) {
-					return { ...typed, dice_name: diceNameById.get(typed.dice_id) ?? typed.dice_name };
-				}
-				if (typed.dice_name) {
-					const match = diceOptions.find(
-						(option) => option.name.toLowerCase() === typed.dice_name?.toLowerCase()
-					);
-					if (match) {
-						return { ...typed, dice_id: match.id, dice_name: match.name };
-					}
-				}
-				return typed;
-			})
-		}));
+	// Special category form state
+	let showSpecialCategoryForm = false;
+	let editingSpecialCategory: SpecialCategoryRow | null = null;
+	let specialCategoryFormData: SpecialCategoryFormData = emptySpecialCategoryForm();
+let diceOptions: { id: string; name: string }[] = [];
+let diceNameById = new Map<string, string>();
+	const resolveDiceLabel = (id: string | null | undefined, fallback?: string) => {
+		if (id && diceNameById.has(id)) return diceNameById.get(id) ?? fallback ?? 'Custom Dice';
+		return fallback ?? (id ?? 'Custom Dice');
+	};
+const summarizeEffectBase = (effect: Effect) => formatEffectSummary(effect, resolveDiceLabel);
+const sorcererName = 'sorcerer';
+
+	let uploadingIconId: string | null = null;
+	let removingIconId: string | null = null;
+	const gameAssetsStorage = supabase.storage.from('game_assets');
+
+	function getIconUrl(iconPng: string | null | undefined): string | null {
+		if (!iconPng) return null;
+		const path = iconPng.startsWith('class_icons/') ? iconPng : `class_icons/${iconPng}`;
+		const { data } = gameAssetsStorage.getPublicUrl(path);
+		return data?.publicUrl ?? null;
 	}
 
+	function isIconImage(iconPng: string | null | undefined): boolean {
+		return !!iconPng;
+	}
+
+	function sanitizeFileName(name: string): string {
+		// Convert to lowercase, replace spaces and special chars with underscores
+		return name
+			.toLowerCase()
+			.trim()
+			.replace(/[^a-z0-9]+/g, '_')
+			.replace(/^_+|_+$/g, '')
+			.slice(0, 50); // Limit length
+	}
+
+	async function handleIconUpload(classEntry: ClassRow, file: File) {
+		if (!file.type.startsWith('image/')) {
+			alert('Please select an image file.');
+			return;
+		}
+		if (file.size > 5 * 1024 * 1024) {
+			alert('Image must be smaller than 5MB.');
+			return;
+		}
+
+		uploadingIconId = classEntry.id;
+		try {
+			// Remove old icon if it exists
+			if (isIconImage(classEntry.icon_png)) {
+				const oldPath = classEntry.icon_png!.startsWith('class_icons/') ? classEntry.icon_png! : `class_icons/${classEntry.icon_png!}`;
+				await gameAssetsStorage.remove([oldPath]);
+			}
+
+			const extension = file.name.split('.').pop()?.toLowerCase() ?? 'png';
+			const sanitizedName = sanitizeFileName(classEntry.name);
+			const fileName = `class_${sanitizedName}_icon.${extension}`;
+			const path = `class_icons/${classEntry.id}/${fileName}`;
+
+			const { error: uploadError } = await gameAssetsStorage.upload(path, file, {
+				cacheControl: '3600',
+				upsert: false,
+				contentType: file.type
+			});
+			if (uploadError) {
+				throw uploadError;
+			}
+
+			const { error: updateError } = await supabase
+				.from('classes')
+				.update({ icon_png: path, updated_at: new Date().toISOString() })
+				.eq('id', classEntry.id);
+			if (updateError) {
+				throw updateError;
+			}
+
+			await loadClasses();
+		} catch (err) {
+			console.error(err);
+			alert('Failed to upload icon. Please try again.');
+		} finally {
+			uploadingIconId = null;
+		}
+	}
+
+	async function removeIcon(classEntry: ClassRow) {
+		if (!isIconImage(classEntry.icon_png)) return;
+		removingIconId = classEntry.id;
+		try {
+			const path = classEntry.icon_png!.startsWith('class_icons/') ? classEntry.icon_png! : `class_icons/${classEntry.icon_png!}`;
+			await gameAssetsStorage.remove([path]);
+			const { error: updateError } = await supabase
+				.from('classes')
+				.update({ icon_png: null, updated_at: new Date().toISOString() })
+				.eq('id', classEntry.id);
+			if (updateError) {
+				throw updateError;
+			}
+			await loadClasses();
+		} catch (err) {
+			console.error(err);
+			alert('Failed to remove icon.');
+		} finally {
+			removingIconId = null;
+		}
+	}
+
+	function handleIconFileChange(classEntry: ClassRow, event: Event) {
+		const target = event.currentTarget as HTMLInputElement;
+		const file = target.files?.[0];
+		target.value = '';
+		if (file) {
+			handleIconUpload(classEntry, file);
+		}
+	}
+
+function toNumericCount(count: EffectBreakpoint['count']): number | null {
+	if (typeof count === 'number' && Number.isFinite(count)) return count;
+	if (typeof count === 'string') {
+		const parsed = Number.parseInt(count, 10);
+		if (Number.isFinite(parsed)) return parsed;
+	}
+	return null;
+}
+
+function sortBreakpointsByCount(breakpoints: EffectBreakpoint[]): EffectBreakpoint[] {
+	return [...breakpoints]
+		.map((bp, index) => ({ bp, index }))
+		.sort((a, b) => {
+			const aNumeric = toNumericCount(a.bp.count);
+			const bNumeric = toNumericCount(b.bp.count);
+
+			if (aNumeric !== null && bNumeric !== null) return aNumeric - bNumeric;
+			if (aNumeric !== null) return -1;
+			if (bNumeric !== null) return 1;
+			return a.index - b.index;
+		})
+		.map(({ bp }) => bp);
+}
+
+function summarizeEffectWithScaling(className: string, effect: Effect): string {
+	if (effect.type !== 'dice') {
+		return summarizeEffectBase(effect);
+	}
+
+		const diceEffect = effect as DiceEffect;
+		const diceLabelRaw = resolveDiceLabel(diceEffect.dice_id, diceEffect.dice_name);
+		const diceLabel = (diceLabelRaw ?? diceEffect.dice_name ?? diceEffect.dice_id ?? 'Custom Dice')
+			.replace(/\s+/g, ' ')
+			.trim();
+		const quantityValue = Number(diceEffect.quantity ?? 0);
+		const quantityDisplay = Number.isFinite(quantityValue) ? Math.max(0, Math.floor(quantityValue)) : 0;
+		const fallbackSummary = `${quantityDisplay}× ${diceLabel}`;
+
+		const isSorcerer = className?.trim().toLowerCase() === sorcererName;
+		if (isSorcerer) {
+			return `${quantityDisplay}× ${diceLabel} × Runes`;
+		}
+
+		const baseSummary = summarizeEffectBase(effect);
+		return baseSummary && baseSummary.trim().length ? baseSummary : fallbackSummary;
+	}
+
+function resolveDiceIdsInSchema(schema: EffectBreakpoint[]): EffectBreakpoint[] {
+	return schema.map((bp) => {
+		const updatedEffects = bp.effects.map((effect) => {
+			if (effect.type !== 'dice') return effect;
+			const typed = effect as DiceEffect;
+			if (typed.dice_id && diceNameById.has(typed.dice_id)) {
+				return { ...typed, dice_name: diceNameById.get(typed.dice_id) ?? typed.dice_name };
+			}
+			if (typed.dice_name) {
+				const normalized = typed.dice_name.toLowerCase();
+				const match = diceOptions.find(
+					(option) => option.name.toLowerCase() === normalized
+				);
+				if (match) {
+					return { ...typed, dice_id: match.id, dice_name: match.name };
+				}
+			}
+			return typed;
+		});
+		return { ...bp, effects: updatedEffects };
+	});
+}
+
 	onMount(async () => {
-		await Promise.all([loadDiceOptions(), loadClasses()]);
+		await loadDiceOptions();
+		await loadClasses();
 	});
 
 	async function loadClasses() {
 		try {
 			loading = true;
 			error = null;
-			classes = await fetchClassRecords();
+			const [classData, categoryData] = await Promise.all([
+				fetchClassRecords(),
+				fetchSpecialCategoryRecords()
+			]);
+			classes = classData;
+			specialCategories = categoryData;
+			void backfillMissingIcons();
 		} catch (err) {
 			error = err instanceof Error ? err.message : String(err);
 		} finally {
@@ -90,12 +269,43 @@
 		}
 	}
 
-	async function loadDiceOptions() {
-		try {
-			const records = await fetchDiceRecords();
-			diceOptions = records.map(({ id, name }) => ({ id, name }));
-			diceNameById.clear();
-			diceOptions.forEach((option) => diceNameById.set(option.id, option.name));
+	async function backfillMissingIcons(force = false) {
+		if (backfillingIcons) return;
+		const targets = classes.filter((c) => (force || !c.icon_png) && c.icon_emoji);
+		if (!targets.length) return;
+		backfillingIcons = true;
+		for (const cls of targets) {
+			try {
+				const blob = await emojiToPngBlob(cls.icon_emoji ?? '', 512);
+				if (!blob) continue;
+				const path = `class_icons/${cls.id}/icon.png`;
+				const { error: uploadError } = await gameAssetsStorage.upload(path, blob, {
+					cacheControl: '3600',
+					upsert: true,
+					contentType: 'image/png'
+				});
+				if (uploadError) throw uploadError;
+				const { error: updateError } = await supabase
+					.from('classes')
+					.update({ icon_png: path, updated_at: new Date().toISOString() })
+					.eq('id', cls.id);
+				if (updateError) throw updateError;
+			} catch (err) {
+				console.warn('Backfill class icon failed for', cls.name, err);
+			}
+		}
+		backfillingIcons = false;
+		void loadClasses();
+	}
+
+async function loadDiceOptions() {
+	try {
+		const records = await fetchDiceRecords();
+		diceOptions = records.map(({ id, name }) => ({
+			id,
+			name: name?.trim() || `Dice ${id.slice(0, 6)}`
+		}));
+		diceNameById = new Map(diceOptions.map((option) => [option.id, option.name]));
 			if (showClassForm) {
 				formData = {
 					...formData,
@@ -326,6 +536,67 @@
 		}
 	}
 
+	// Special category functions
+	function getClassById(id: string): ClassRow | undefined {
+		return classes.find((c) => c.id === id);
+	}
+
+	function openSpecialCategoryForm(category?: SpecialCategoryRow) {
+		if (category) {
+			editingSpecialCategory = category;
+			specialCategoryFormData = specialCategoryRowToForm(category);
+		} else {
+			editingSpecialCategory = null;
+			const nextPosition = (specialCategories.at(-1)?.position ?? specialCategories.length) + 1;
+			specialCategoryFormData = emptySpecialCategoryForm(nextPosition);
+		}
+		showSpecialCategoryForm = true;
+	}
+
+	function closeSpecialCategoryForm() {
+		showSpecialCategoryForm = false;
+	}
+
+	async function saveSpecialCategory() {
+		if (!specialCategoryFormData.name.trim()) {
+			alert('Special category name is required.');
+			return;
+		}
+		try {
+			await saveSpecialCategoryRecord(specialCategoryFormData);
+			await loadClasses();
+			closeSpecialCategoryForm();
+		} catch (err) {
+			const message = err instanceof Error ? err.message : String(err);
+			alert(`Failed to save special category: ${message}`);
+		}
+	}
+
+	async function deleteSpecialCategory(category: SpecialCategoryRow) {
+		if (!confirm(`Delete special category "${category.name}"?`)) return;
+		try {
+			await deleteSpecialCategoryRecord(category.id);
+			await loadClasses();
+		} catch (err) {
+			const message = err instanceof Error ? err.message : String(err);
+			alert(`Failed to delete special category: ${message}`);
+		}
+	}
+
+	function submitSpecialCategoryForm(event: Event) {
+		event.preventDefault();
+		void saveSpecialCategory();
+	}
+
+	function toggleClassInSlot(slotKey: 'slot_1_class_ids' | 'slot_2_class_ids' | 'slot_3_class_ids', classId: string) {
+		const currentIds = specialCategoryFormData[slotKey];
+		if (currentIds.includes(classId)) {
+			specialCategoryFormData[slotKey] = currentIds.filter((id) => id !== classId);
+		} else {
+			specialCategoryFormData[slotKey] = [...currentIds, classId];
+		}
+	}
+
 	function renderMultiline(value?: string | null): string {
 		return (value ?? '').replace(/\r\n/g, '\n').trim();
 	}
@@ -336,16 +607,159 @@
 	}
 
 	async function exportToPDF() {
-	if (!classes.length) {
+	if (!classes.length && !specialCategories.length) {
 		alert('No classes to export.');
 		return;
 	}
 
-	const sorted = [...classes].sort((a, b) => a.position - b.position || a.name.localeCompare(b.name));
+	// Get class IDs that are in special categories
+	const specialClassIds = new Set(
+		specialCategories.flatMap((cat) => [
+			...cat.slot_1_class_ids,
+			...cat.slot_2_class_ids,
+			...cat.slot_3_class_ids
+		])
+	);
+
+	// Filter out classes that are in special categories
+	const regularClasses = classes.filter((c) => !specialClassIds.has(c.id));
+	const sorted = [...regularClasses].sort((a, b) => a.position - b.position || a.name.localeCompare(b.name));
+
+	// Helper to render a regular class card
+	const renderClassCard = (entry: ClassRow) => {
+		const effectSchema = sortBreakpointsByCount(
+			resolveDiceIdsInSchema(parseEffectSchema(entry.effect_schema))
+		);
+		const description = renderMultiline(entry.description);
+		const footer = renderMultiline(entry.footer);
+		const prismatic = getPrismatic(entry.prismatic);
+		const tags =
+			Array.isArray(entry.tags) && entry.tags.length
+				? entry.tags
+						.map(
+							(tag) =>
+								`<span style="display:inline-block; padding:2px 6px; border-radius:999px; background:#e2e8f0; color:#0f172a; font-size:8px; margin-right:4px; margin-bottom:4px;">${tag}</span>`
+						)
+						.join('')
+				: '';
+
+		const iconUrl = getIconUrl(entry.icon_png);
+		const iconHtml = iconUrl
+			? `<div style="width:24px; height:24px; background-color:#ffffff; border-radius:4px; display:flex; align-items:center; justify-content:center;"><img src="${iconUrl}" style="width:100%; height:100%; object-fit:contain;" crossorigin="anonymous" /></div>`
+			: `<span style="font-size:18px; line-height:1;">${entry.icon_emoji ?? '🛡️'}</span>`;
+
+		return `
+			<div style="padding: 10px; border: 3px solid ${entry.color ?? '#8b5cf6'}; background: #ffffff; border-radius: 8px; display: flex; flex-direction: column;">
+				<div style="display:flex; align-items:center; gap:6px; margin-bottom:6px;">
+					${iconHtml}
+					<div style="flex:1;">
+						<h3 style="margin:0; font-size:14px; font-weight:700; color:#1e293b; line-height:1.2;">${entry.name}</h3>
+					</div>
+					${tags ? `<div style="display:flex; flex-wrap:wrap; justify-content:flex-end; gap:2px;">${tags}</div>` : ''}
+				</div>
+				${description ? `<p style="margin:4px 0; font-size:9px; color:#475569; line-height:1.3; white-space:pre-line;">${description}</p>` : ''}
+				${
+					effectSchema.length
+						? effectSchema
+								.map(
+									(bp) => `
+							<div style="margin:3px 0; font-size:8px; line-height:1.3;">
+								<strong style="color:#0f172a;">${bp.count}:</strong>
+								<span style="color:#64748b;">
+									${bp.effects.map((effect) => summarizeEffectWithScaling(entry.name, effect)).join(', ')}
+								</span>
+							</div>
+						`
+								)
+								.join('')
+						: '<p style="margin:4px 0; font-size:8px; font-style:italic; color:#94a3b8;">No effects configured.</p>'
+				}
+				${
+					prismatic
+						? `
+					<div style="margin:4px 0; padding:6px; background:linear-gradient(135deg, #ede9fe, #ddd6fe, #c7d2fe); border-radius:4px; font-size:8px; line-height:1.3;">
+						<strong style="color:#7c3aed; font-size:9px;">${prismatic.count || ''} ${prismatic.name}</strong>
+						${prismatic.description ? `<div style="margin-top:3px; color:#6b21a8;">${prismatic.description}</div>` : ''}
+					</div>
+				`
+						: ''
+				}
+				${footer ? `<div style="margin-top:6px; padding-top:4px; border-top:1px solid #e2e8f0; font-size:7px; color:#94a3b8; white-space:pre-line;">${footer}</div>` : ''}
+			</div>
+		`;
+	};
+
+	// Helper to render a special category card
+	const renderSpecialCategoryCard = (category: SpecialCategoryRow) => {
+		const renderSlot = (slotIds: string[], slotIndex: number) => {
+			if (slotIds.length === 0) {
+				return `<div style="flex:1; padding:6px; background:#f8fafc; border:1px dashed #cbd5e1; border-radius:4px; display:flex; align-items:center; justify-content:center;">
+					<span style="font-size:7px; color:#94a3b8; font-style:italic;">Slot ${slotIndex + 1}</span>
+				</div>`;
+			}
+
+			const classesHtml = slotIds
+				.map((classId) => {
+					const cls = getClassById(classId);
+					if (!cls) return '';
+
+					const effectSchema = sortBreakpointsByCount(
+						resolveDiceIdsInSchema(parseEffectSchema(cls.effect_schema))
+					);
+
+					const breakpointsHtml = effectSchema
+						.map(
+							(bp) =>
+								`<div style="font-size:6px; color:#64748b; line-height:1.2;">(${bp.count}) ${bp.effects.map((e) => summarizeEffectWithScaling(cls.name, e)).join(', ')}</div>`
+						)
+						.join('');
+
+					return `
+						<div style="padding-left:6px; border-left:2px solid ${cls.color ?? '#8b5cf6'};">
+							<div style="display:flex; align-items:center; gap:4px; margin-bottom:2px;">
+								<span style="font-size:10px;">${cls.icon_emoji ?? '🛡️'}</span>
+								<span style="font-size:8px; font-weight:600; color:#1e293b;">${cls.name}</span>
+							</div>
+							${breakpointsHtml}
+						</div>
+					`;
+				})
+				.join('');
+
+			return `<div style="flex:1; padding:6px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:4px; display:flex; flex-direction:column; gap:4px;">
+				${classesHtml}
+			</div>`;
+		};
+
+		const description = category.description ? `<p style="margin:4px 0 6px 0; font-size:8px; color:#475569; line-height:1.3;">${category.description}</p>` : '';
+
+		return `
+			<div style="padding: 10px; border: 3px solid ${category.color ?? '#8b5cf6'}; background: #ffffff; border-radius: 8px; display: flex; flex-direction: column;">
+				<div style="display:flex; align-items:center; gap:6px; margin-bottom:6px;">
+					<span style="font-size:18px; line-height:1;">${category.icon_emoji ?? '⚡'}</span>
+					<h3 style="margin:0; font-size:14px; font-weight:700; color:#1e293b; line-height:1.2;">${category.name}</h3>
+				</div>
+				${description}
+				<div style="display:flex; flex-direction:column; gap:4px; flex:1;">
+					${renderSlot(category.slot_1_class_ids, 0)}
+					${renderSlot(category.slot_2_class_ids, 1)}
+					${renderSlot(category.slot_3_class_ids, 2)}
+				</div>
+			</div>
+		`;
+	};
+
+	// Build combined list: special categories first, then regular classes
+	type CardItem = { type: 'class'; data: ClassRow } | { type: 'special'; data: SpecialCategoryRow };
+	const allCards: CardItem[] = [
+		...specialCategories.map((cat) => ({ type: 'special' as const, data: cat })),
+		...sorted.map((cls) => ({ type: 'class' as const, data: cls }))
+	];
+
 	const chunkSize = 9; // 3 columns × 3 rows per page
-	const chunks: ClassRow[][] = [];
-	for (let i = 0; i < sorted.length; i += chunkSize) {
-		chunks.push(sorted.slice(i, i + chunkSize));
+	const chunks: CardItem[][] = [];
+	for (let i = 0; i < allCards.length; i += chunkSize) {
+		chunks.push(allCards.slice(i, i + chunkSize));
 	}
 
 	const pdf = new jsPDF({
@@ -377,70 +791,39 @@
           </h1>
           <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; grid-auto-rows: min-content;">
             ${group
-							.map((entry) => {
-								const effectSchema = parseEffectSchema(entry.effect_schema);
-								const description = renderMultiline(entry.description);
-								const footer = renderMultiline(entry.footer);
-								const prismatic = getPrismatic(entry.prismatic);
-								const tags =
-									Array.isArray(entry.tags) && entry.tags.length
-										? entry.tags
-												.map(
-													(tag) =>
-														`<span style="display:inline-block; padding:2px 6px; border-radius:999px; background:#e2e8f0; color:#0f172a; font-size:8px; margin-right:4px; margin-bottom:4px;">${tag}</span>`
-												)
-												.join('')
-										: '';
-
-								return `
-                  <div style="padding: 10px; border: 3px solid ${entry.color ?? '#8b5cf6'}; background: #ffffff; border-radius: 8px; display: flex; flex-direction: column;">
-                    <div style="display:flex; align-items:center; gap:6px; margin-bottom:6px;">
-                      <span style="font-size:18px; line-height:1;">${entry.icon ?? '🛡️'}</span>
-                      <div>
-                        <h3 style="margin:0; font-size:14px; font-weight:700; color:#1e293b; line-height:1.2;">${entry.name}</h3>
-                        <small style="font-size:9px; color:#475569;">Position ${entry.position}</small>
-                      </div>
-                    </div>
-                    ${description ? `<p style="margin:4px 0; font-size:9px; color:#475569; line-height:1.3; white-space:pre-line;">${description}</p>` : ''}
-                    ${tags ? `<div style="margin:4px 0;">${tags}</div>` : ''}
-                    ${
-											effectSchema.length
-												? effectSchema
-														.map(
-															(bp) => `
-                          <div style="margin:3px 0; font-size:8px; line-height:1.3;">
-                            <strong style="color:#0f172a;">${bp.count}:</strong>
-                            <span style="color:#64748b;">
-                              ${bp.effects.map((effect) => summarizeEffect(effect)).join(', ')}
-                            </span>
-                          </div>
-                        `
-														)
-														.join('')
-												: '<p style="margin:4px 0; font-size:8px; font-style:italic; color:#94a3b8;">No effects configured.</p>'
-										}
-                    ${
-											prismatic
-												? `
-                      <div style="margin:4px 0; padding:6px; background:linear-gradient(135deg, #ede9fe, #ddd6fe, #c7d2fe); border-radius:4px; font-size:8px; line-height:1.3;">
-                        <strong style="color:#7c3aed; font-size:9px;">${prismatic.count || ''} ${prismatic.name}</strong>
-                        ${prismatic.description ? `<div style="margin-top:3px; color:#6b21a8;">${prismatic.description}</div>` : ''}
-                      </div>
-                    `
-												: ''
-										}
-                    ${footer ? `<div style="margin-top:6px; padding-top:4px; border-top:1px solid #e2e8f0; font-size:7px; color:#94a3b8; white-space:pre-line;">${footer}</div>` : ''}
-                  </div>
-                `;
+							.map((item) => {
+								if (item.type === 'special') {
+									return renderSpecialCategoryCard(item.data);
+								} else {
+									return renderClassCard(item.data);
+								}
 							})
 							.join('')}
           </div>
         </div>
       `;
 
+			// Wait for images to load
+			const images = tempContainer.querySelectorAll('img');
+			await Promise.all(
+				Array.from(images).map(
+					(img) =>
+						new Promise<void>((resolve) => {
+							if (img.complete) {
+								resolve();
+							} else {
+								img.onload = () => resolve();
+								img.onerror = () => resolve(); // Continue even if image fails
+							}
+						})
+				)
+			);
+
 			const canvas = await html2canvas(tempContainer, {
 				scale: 2,
-				backgroundColor: '#ffffff'
+				backgroundColor: '#ffffff',
+				useCORS: true,
+				allowTaint: false
 			});
 			const imgData = canvas.toDataURL('image/png');
 			if (pageIndex > 0) {
@@ -458,7 +841,18 @@
 	}
 }
 
+	// Compute set of class IDs that are in any special category
+	$: specialCategoryClassIds = new Set(
+		specialCategories.flatMap((cat) => [
+			...cat.slot_1_class_ids,
+			...cat.slot_2_class_ids,
+			...cat.slot_3_class_ids
+		])
+	);
+
 	$: filteredClasses = classes.filter((entry) => {
+		// Exclude classes that are in a special category
+		if (specialCategoryClassIds.has(entry.id)) return false;
 		if (!search.trim()) return true;
 		const term = search.trim().toLowerCase();
 		return (
@@ -476,7 +870,11 @@
 			<p>Combat archetypes with structured effect breakpoints.</p>
 		</div>
 		<div class="actions">
+			<button class="btn" onclick={() => backfillMissingIcons(true)} aria-busy={backfillingIcons}>
+				{backfillingIcons ? 'Resetting PNGs…' : 'Reset PNGs'}
+			</button>
 			<button class="btn" onclick={exportToPDF}>Export PDF</button>
+			<button class="btn" onclick={() => openSpecialCategoryForm()}>Create Special</button>
 			<button class="btn" onclick={() => openClassForm()}>Create Class</button>
 		</div>
 	</header>
@@ -493,31 +891,127 @@
 	{:else if error}
 		<div class="card error">Error: {error}</div>
 	{:else}
-		{#if filteredClasses.length === 0}
+		{#if filteredClasses.length === 0 && specialCategories.length === 0}
 			<div class="card empty">No classes match the current search.</div>
 		{:else}
 			<section class="class-grid">
+				<!-- Special Category Cards - 3 classes in 1 card space -->
+				{#each specialCategories as category (category.id)}
+					<article class="special-category-card" style="border-left-color: {category.color ?? '#8b5cf6'}">
+						<header class="special-category-card__header">
+							<div class="special-category-card__identity">
+								<span class="special-category-card__icon">{category.icon_emoji ?? '⚡'}</span>
+								<div>
+									<h2>{category.name}</h2>
+								</div>
+							</div>
+							<CardActionMenu
+								onEdit={() => openSpecialCategoryForm(category)}
+								onDelete={() => deleteSpecialCategory(category)}
+								onGenerate={null}
+							/>
+						</header>
+
+						{#if category.description}
+							<p class="special-category-card__description">{category.description}</p>
+						{/if}
+
+						<div class="special-slots">
+							{#each [category.slot_1_class_ids, category.slot_2_class_ids, category.slot_3_class_ids] as slotIds, slotIndex}
+								<div class="special-slot" class:special-slot--empty={slotIds.length === 0}>
+									{#each slotIds as classId}
+										{@const cls = getClassById(classId)}
+										{#if cls}
+											{@const slotEffectSchema = sortBreakpointsByCount(
+												resolveDiceIdsInSchema(parseEffectSchema(cls.effect_schema))
+											)}
+											<div class="special-slot__class" style="border-left-color: {cls.color ?? '#8b5cf6'}">
+												<div class="special-slot__header">
+													<span class="special-slot__icon">{cls.icon_emoji ?? '🛡️'}</span>
+													<span class="special-slot__name">{cls.name}</span>
+													<button
+														type="button"
+														class="special-slot__edit-btn"
+														onclick={() => openClassForm(cls)}
+														title="Edit {cls.name}"
+													>
+														✏️
+													</button>
+												</div>
+												{#if slotEffectSchema.length}
+													<div class="special-slot__breakpoints">
+														{#each slotEffectSchema as bp, bpIndex (`${classId}-bp-${bpIndex}`)}
+															<span
+																class="special-slot__bp"
+																class:bronze={bp.color === 'bronze'}
+																class:silver={bp.color === 'silver'}
+																class:gold={bp.color === 'gold'}
+																class:prismatic={bp.color === 'prismatic'}
+															>
+																({bp.count}) {bp.effects.map((e) => summarizeEffectWithScaling(cls.name, e)).join(', ')}
+															</span>
+														{/each}
+													</div>
+												{/if}
+											</div>
+										{/if}
+									{/each}
+									{#if slotIds.length === 0}
+										<span class="special-slot__placeholder">Slot {slotIndex + 1}</span>
+									{/if}
+								</div>
+							{/each}
+						</div>
+					</article>
+				{/each}
+
+				<!-- Regular Class Cards -->
 				{#each filteredClasses as entry (entry.id)}
 					{@const description = renderMultiline(entry.description)}
 					{@const footer = renderMultiline(entry.footer)}
-					{@const prismatic = getPrismatic(entry.prismatic)}
-					{@const effectSchema = parseEffectSchema(entry.effect_schema)}
+                    {@const prismatic = getPrismatic(entry.prismatic)}
+                    {@const effectSchema = sortBreakpointsByCount(
+                     resolveDiceIdsInSchema(parseEffectSchema(entry.effect_schema))
+                    )}
 					<article class="class-card" style={`border-left-color: ${entry.color ?? '#8b5cf6'}`}>
 						<header class="class-card__header">
 							<div class="class-card__identity">
-								<span class="class-card__icon">{entry.icon ?? '🛡️'}</span>
+								{#if getIconUrl(entry.icon_png)}
+									<img class="class-card__icon-image" src={getIconUrl(entry.icon_png)} alt={`${entry.name} icon`} />
+								{:else}
+									<span class="class-card__icon">{entry.icon_emoji ?? '🛡️'}</span>
+								{/if}
 								<div>
 									<h2>{entry.name}</h2>
 									<small>Position {entry.position}</small>
 								</div>
 							</div>
-							<div class="class-card__actions">
-								<button class="btn" type="button" onclick={() => openClassForm(entry)}>Edit</button>
-								<button class="btn danger" type="button" onclick={() => deleteClass(entry)}>
-									Delete
-								</button>
-							</div>
+						<CardActionMenu
+								onEdit={() => openClassForm(entry)}
+								onDelete={() => deleteClass(entry)}
+								onGenerate={null}
+							/>
 						</header>
+
+						<div class="class-card__icon-actions">
+							<label class="upload-button">
+								<input
+									type="file"
+									accept="image/*"
+									onchange={(event) => handleIconFileChange(entry, event)}
+									aria-label={`Upload icon for ${entry.name}`}
+								/>
+								<span>{uploadingIconId === entry.id ? 'Uploading…' : 'Upload Icon'}</span>
+							</label>
+							<button
+								class="btn danger"
+								type="button"
+								onclick={() => removeIcon(entry)}
+								disabled={removingIconId === entry.id || !isIconImage(entry.icon_png)}
+							>
+								{removingIconId === entry.id ? 'Removing…' : 'Remove Icon'}
+							</button>
+						</div>
 
 						{#if description}
 							<p class="class-card__description">{description}</p>
@@ -551,7 +1045,9 @@
 											</span>
 											<div class="breakpoints__effects">
 								{#each bp.effects as effect, effectIndex (`${entry.id}-bp-${index}-effect-${effectIndex}`)}
-									<span class="effect-tag">{summarizeEffect(effect)}</span>
+									<span class="effect-tag">
+										{summarizeEffectWithScaling(entry.name, effect)}
+									</span>
 												{/each}
 											</div>
 										</div>
@@ -607,8 +1103,23 @@
 						<input type="number" min="1" bind:value={formData.position} />
 					</label>
 					<label>
-						Icon
-						<input type="text" bind:value={formData.icon} placeholder="Emoji or icon" />
+						Icon Emoji
+						<input type="text" bind:value={formData.icon_emoji} placeholder="e.g. 🛡️" />
+					</label>
+					<label>
+						Icon PNG (uploads to storage)
+						<input
+							type="file"
+							accept="image/*"
+							onchange={(event) =>
+								handleIconFileChange(
+									(editingClass as any) ?? { id: (formData as any).id ?? crypto.randomUUID(), ...(formData as any) },
+									event
+								)}
+						/>
+						{#if formData.icon_png}
+							<small>Current path: {formData.icon_png}</small>
+						{/if}
 					</label>
 					<label>
 						Color
@@ -789,6 +1300,9 @@
 															🗑️
 														</button>
 													</header>
+													<p class="effect-row__summary">
+														{summarizeEffectWithScaling(formData.name ?? '', effect)}
+													</p>
 
 							{#if effect.type === 'dice'}
 								<section class="effect-body effect-body--dice">
@@ -841,6 +1355,12 @@
 													}))}
 											/>
 										</label>
+									{/if}
+									{#if (formData.name ?? '').trim().toLowerCase() === sorcererName}
+										<p class="effect-body__note span-full">
+											Preview: {summarizeEffectWithScaling(formData.name ?? '', effect)}.
+											Rune count multiplies the dice quantity during gameplay.
+										</p>
 									{/if}
 								</section>
 							{:else if effect.type === 'flat_stat'}
@@ -988,6 +1508,72 @@
 			<div slot="footer" class="modal-footer-actions">
 				<button class="btn btn--primary" type="submit" form="class-editor-form">Save</button>
 				<button class="btn" type="button" onclick={closeClassForm}>Cancel</button>
+			</div>
+		</EditorModal>
+	{/if}
+
+	{#if showSpecialCategoryForm}
+		<EditorModal
+			title={editingSpecialCategory ? 'Edit Special Category' : 'Create Special Category'}
+			description="A special category card displays 3 slots, each containing multiple classes."
+			size="lg"
+			on:close={closeSpecialCategoryForm}
+		>
+			<form id="special-category-form" class="special-category-form" onsubmit={submitSpecialCategoryForm}>
+				<div class="special-category-form__grid">
+					<label>
+						Name
+						<input type="text" bind:value={specialCategoryFormData.name} required />
+					</label>
+					<label>
+						Icon Emoji
+						<input type="text" bind:value={specialCategoryFormData.icon_emoji} placeholder="e.g. ⚡" />
+					</label>
+					<label>
+						Color
+						<input type="color" bind:value={specialCategoryFormData.color} />
+					</label>
+					<label>
+						Position
+						<input type="number" min="0" bind:value={specialCategoryFormData.position} />
+					</label>
+				</div>
+
+				<label class="span-full">
+					Description
+					<textarea rows="2" bind:value={specialCategoryFormData.description}></textarea>
+				</label>
+
+				<div class="slot-editors">
+					{#each [
+						{ key: 'slot_1_class_ids' as const, label: 'Slot 1' },
+						{ key: 'slot_2_class_ids' as const, label: 'Slot 2' },
+						{ key: 'slot_3_class_ids' as const, label: 'Slot 3' }
+					] as slot}
+						<fieldset class="slot-fieldset">
+							<legend>{slot.label}</legend>
+							<div class="slot-class-grid">
+								{#each classes as cls (cls.id)}
+									<label class="slot-class-checkbox">
+										<input
+											type="checkbox"
+											checked={specialCategoryFormData[slot.key].includes(cls.id)}
+											onchange={() => toggleClassInSlot(slot.key, cls.id)}
+										/>
+										<span class="slot-class-label" style="border-color: {cls.color ?? '#8b5cf6'}">
+											{cls.icon_emoji ?? '🛡️'} {cls.name}
+										</span>
+									</label>
+								{/each}
+							</div>
+						</fieldset>
+					{/each}
+				</div>
+			</form>
+
+			<div slot="footer" class="modal-footer-actions">
+				<button class="btn btn--primary" type="submit" form="special-category-form">Save</button>
+				<button class="btn" type="button" onclick={closeSpecialCategoryForm}>Cancel</button>
 			</div>
 		</EditorModal>
 	{/if}
@@ -1162,6 +1748,12 @@
 		padding: 0.22rem 0.45rem;
 	}
 
+	.effect-row__summary {
+		margin: 0;
+		font-size: 0.85rem;
+		color: #cbd5f5;
+	}
+
 	.effect-body {
 		display: grid;
 		grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
@@ -1174,6 +1766,16 @@
 
 	.effect-body--dice .span-full {
 		grid-column: 1 / -1;
+	}
+
+	.effect-body__note {
+		margin: 0;
+		font-size: 0.8rem;
+		color: #a5b4fc;
+		background: rgba(99, 102, 241, 0.12);
+		border: 1px solid rgba(99, 102, 241, 0.25);
+		border-radius: 6px;
+		padding: 0.35rem 0.55rem;
 	}
 
 	.class-grid {
@@ -1210,9 +1812,54 @@
 		font-size: 1.75rem;
 	}
 
-	.class-card__actions {
+	.class-card__icon-image {
+		width: 28px;
+		height: 28px;
+		object-fit: contain;
+		border-radius: 4px;
+	}
+
+	.class-card__icon-actions {
 		display: flex;
-		gap: 0.4rem;
+		gap: 0.5rem;
+		padding: 0.5rem 0;
+		border-top: 1px solid rgba(148, 163, 184, 0.1);
+		border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+		margin: 0.5rem 0;
+	}
+
+	.upload-button {
+		display: inline-flex;
+		align-items: center;
+		cursor: pointer;
+	}
+
+	.upload-button input[type="file"] {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		padding: 0;
+		margin: -1px;
+		overflow: hidden;
+		clip: rect(0, 0, 0, 0);
+		white-space: nowrap;
+		border-width: 0;
+	}
+
+	.upload-button span {
+		display: inline-block;
+		padding: 0.4rem 0.7rem;
+		background: rgba(59, 130, 246, 0.3);
+		border: 1px solid rgba(59, 130, 246, 0.5);
+		border-radius: 6px;
+		color: #93c5fd;
+		font-size: 0.875rem;
+		transition: opacity 0.15s ease;
+	}
+
+	.upload-button:hover span {
+		background: rgba(59, 130, 246, 0.4);
+		border-color: rgba(59, 130, 246, 0.7);
 	}
 
 	.class-card__description {
@@ -1359,5 +2006,201 @@
 	.error {
 		border-color: rgba(248, 113, 113, 0.45);
 		color: #fecaca;
+	}
+
+	/* Special Category Card Styles - matches regular class card styling */
+	.special-category-card {
+		display: flex;
+		flex-direction: column;
+		gap: 0.75rem;
+		padding: 1rem;
+		border-left: 4px solid rgba(139, 92, 246, 0.6);
+		background: rgba(15, 23, 42, 0.7);
+		border-radius: 14px;
+		border: 1px solid rgba(148, 163, 184, 0.18);
+	}
+
+	.special-category-card__header {
+		display: flex;
+		align-items: flex-start;
+		justify-content: space-between;
+		gap: 0.75rem;
+	}
+
+	.special-category-card__identity {
+		display: flex;
+		gap: 0.6rem;
+		align-items: center;
+	}
+
+	.special-category-card__icon {
+		font-size: 1.75rem;
+	}
+
+	.special-category-card__description {
+		margin: 0;
+		color: #d1d5f9;
+		white-space: pre-wrap;
+		font-size: 0.9rem;
+	}
+
+	.special-slots {
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
+	}
+
+	.special-slot {
+		display: flex;
+		align-items: flex-start;
+		padding: 0.5rem;
+		background: rgba(15, 23, 42, 0.55);
+		border: 1px solid rgba(148, 163, 184, 0.18);
+		border-radius: 8px;
+	}
+
+	.special-slot--empty {
+		justify-content: center;
+		padding: 0.75rem;
+	}
+
+	.special-slot__class {
+		display: flex;
+		flex-direction: column;
+		gap: 0.2rem;
+		padding-left: 0.5rem;
+		border-left: 3px solid;
+		flex: 1;
+	}
+
+	.special-slot__header {
+		display: flex;
+		align-items: center;
+		gap: 0.4rem;
+	}
+
+	.special-slot__icon {
+		font-size: 1rem;
+	}
+
+	.special-slot__name {
+		font-size: 0.85rem;
+		font-weight: 600;
+		color: #e2e8f0;
+		flex: 1;
+	}
+
+	.special-slot__edit-btn {
+		padding: 0.15rem 0.3rem;
+		font-size: 0.7rem;
+		background: rgba(59, 130, 246, 0.2);
+		border: 1px solid rgba(59, 130, 246, 0.3);
+		border-radius: 4px;
+		cursor: pointer;
+		opacity: 0.6;
+		transition: opacity 0.15s ease, background 0.15s ease;
+	}
+
+	.special-slot__edit-btn:hover {
+		opacity: 1;
+		background: rgba(59, 130, 246, 0.35);
+	}
+
+	.special-slot__breakpoints {
+		display: flex;
+		flex-direction: column;
+		gap: 0.1rem;
+	}
+
+	.special-slot__bp {
+		font-size: 0.7rem;
+		color: #94a3b8;
+		line-height: 1.25;
+	}
+
+	.special-slot__bp.bronze {
+		color: #fbbf24;
+	}
+
+	.special-slot__bp.silver {
+		color: #cbd5f5;
+	}
+
+	.special-slot__bp.gold {
+		color: #facc15;
+	}
+
+	.special-slot__bp.prismatic {
+		background: linear-gradient(135deg, #f472b6, #60a5fa, #34d399);
+		-webkit-background-clip: text;
+		-webkit-text-fill-color: transparent;
+		background-clip: text;
+	}
+
+	.special-slot__placeholder {
+		font-size: 0.8rem;
+		color: #475569;
+		font-style: italic;
+	}
+
+	/* Special Category Form Styles */
+	.special-category-form {
+		display: flex;
+		flex-direction: column;
+		gap: 1rem;
+	}
+
+	.special-category-form__grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+		gap: 0.75rem;
+	}
+
+	.slot-editors {
+		display: flex;
+		flex-direction: column;
+		gap: 0.75rem;
+	}
+
+	.slot-fieldset {
+		border: 1px solid rgba(148, 163, 184, 0.2);
+		border-radius: 8px;
+		padding: 0.75rem;
+	}
+
+	.slot-fieldset legend {
+		padding: 0 0.5rem;
+		font-weight: 600;
+		color: #e2e8f0;
+		font-size: 0.9rem;
+	}
+
+	.slot-class-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+		gap: 0.5rem;
+	}
+
+	.slot-class-checkbox {
+		display: flex;
+		align-items: center;
+		gap: 0.4rem;
+		cursor: pointer;
+	}
+
+	.slot-class-checkbox input {
+		margin: 0;
+	}
+
+	.slot-class-label {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.25rem;
+		padding: 0.25rem 0.5rem;
+		background: rgba(51, 65, 85, 0.4);
+		border: 1px solid;
+		border-radius: 5px;
+		font-size: 0.8rem;
+		color: #cbd5e1;
 	}
 </style>

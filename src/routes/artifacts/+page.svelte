@@ -1,466 +1,527 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { supabase } from '$lib/api/supabaseClient';
-import type { ArtifactRecipeEntry, ArtifactRow, OriginRow, RuneRow } from '$lib/types/gameData';
+	import type {
+		ArtifactRow,
+		OriginRow,
+		RuneRow,
+		GuardianRow,
+		ArtifactTagRow
+	} from '$lib/types/gameData';
+	import ArtifactFilterSidebar from '$lib/components/artifacts/ArtifactFilterSidebar.svelte';
+	import ArtifactGrid from '$lib/components/artifacts/ArtifactGrid.svelte';
+	import ArtifactEditorDrawer from '$lib/components/artifacts/ArtifactEditorDrawer.svelte';
+	import TagManager from '$lib/components/artifacts/TagManager.svelte';
+	import ArtifactCardGallery from '$lib/components/artifacts/ArtifactCardGallery.svelte';
+	import { generateArtifactCardPNG } from '$lib/utils/artifactCardGenerator';
 
-type Artifact = ArtifactRow;
-type OriginOption = Pick<OriginRow, 'id' | 'name'>;
-type RuneOption = Pick<RuneRow, 'id' | 'name' | 'origin_id'>;
+	// Data
+	let artifacts: ArtifactRow[] = [];
+	let origins: OriginRow[] = [];
+	let runes: RuneRow[] = [];
+	let guardians: Pick<GuardianRow, 'id' | 'name'>[] = [];
+	let tags: ArtifactTagRow[] = [];
 
-let artifacts: Artifact[] = [];
-let origins: OriginOption[] = [];
-let runes: RuneOption[] = [];
+	// UI State
+	let isEditorOpen = false;
+	let isTagManagerOpen = false;
+	let isGalleryOpen = false;
+	let editingArtifact: Partial<ArtifactRow> = {};
 	let loading = true;
-	let error: string | null = null;
+	let generatingAllCards = false;
+	let generationProgress = { current: 0, total: 0 };
 
-	let search = '';
-	let originFilter = 'all';
+	// Filters
+let search = '';
+let tagFilter: string[] = [];
+let sortBy: 'name' | 'created' = 'name';
+let groupByTags = true;
 
-	let showArtifactForm = false;
-	let editingArtifact: Artifact | null = null;
-	let artifactForm: Partial<Artifact> & { recipe_box: ArtifactRecipeEntry[] } = {
-		name: '',
-		benefit: '',
-		origin_id: '',
-		recipe_box: []
-	};
+// Filtered Artifacts
+$: filteredArtifacts = artifacts
+		.filter((artifact) => {
+			// Search
+			if (search) {
+				const q = search.toLowerCase();
+				const matchesName = artifact.name?.toLowerCase().includes(q);
+				const matchesBenefit = artifact.benefit?.toLowerCase().includes(q);
+				if (!matchesName && !matchesBenefit) {
+					return false;
+				}
+			}
+
+			// Tag Filter
+			if (tagFilter.length > 0) {
+				const tagSet = new Set(artifact.tag_ids ?? []);
+				if (!tagFilter.every((t) => tagSet.has(t))) return false;
+			}
+
+			return true;
+		})
+		.sort((a, b) => {
+			if (sortBy === 'name') return (a.name || '').localeCompare(b.name || '');
+			if (sortBy === 'created')
+				return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
+			return 0;
+		});
+
+	// Group artifacts by tags
+	$: groupedByTags = (() => {
+		if (!groupByTags) return null;
+		
+		const groups = new Map<string, typeof filteredArtifacts>();
+		const noTagsGroup: typeof filteredArtifacts = [];
+
+		filteredArtifacts.forEach((artifact) => {
+			if (!artifact.tag_ids || artifact.tag_ids.length === 0) {
+				noTagsGroup.push(artifact);
+			} else {
+				artifact.tag_ids.forEach((tagId) => {
+					const tagName = tags.find((t) => t.id === tagId)?.name ?? 'Tag';
+					if (!groups.has(tagName)) groups.set(tagName, []);
+					groups.get(tagName)!.push(artifact);
+				});
+			}
+		});
+
+		const result: Array<{ tag: string; artifacts: typeof filteredArtifacts }> = [];
+		if (noTagsGroup.length > 0) result.push({ tag: 'No Tags', artifacts: noTagsGroup });
+
+		Array.from(groups.entries())
+			.sort(([a], [b]) => a.localeCompare(b))
+			.forEach(([tag, artifacts]) => {
+				const uniqueArtifacts = Array.from(new Map(artifacts.map((a) => [a.id, a])).values());
+				result.push({ tag, artifacts: uniqueArtifacts });
+			});
+
+		return result;
+	})();
+
 
 	onMount(async () => {
-		await Promise.all([loadOrigins(), loadRunes()]);
-		await loadArtifacts();
+		await loadData();
 	});
 
-	async function loadOrigins() {
-		const { data, error: fetchError } = await supabase
-			.from('origins')
-			.select('id, name')
-			.order('position', { ascending: true });
-		if (fetchError) {
-			error = fetchError.message;
-			return;
-		}
-		origins = data ?? [];
-	}
-
-	async function loadRunes() {
-		const { data, error: fetchError } = await supabase
-			.from('runes')
-			.select('id, name, origin_id')
-			.order('name', { ascending: true });
-		if (fetchError) {
-			error = fetchError.message;
-			return;
-		}
-		runes = data ?? [];
-	}
-
-	async function loadArtifacts() {
+	async function loadData() {
 		loading = true;
-		error = null;
-		const { data, error: fetchError } = await supabase
-			.from('artifacts')
-			.select('*')
-			.order('created_at', { ascending: true });
-		if (fetchError) {
-			error = fetchError.message;
-			loading = false;
-			return;
-		}
-		artifacts =
-			data?.map((artifact) => ({
-				...artifact,
-				recipe_box: Array.isArray(artifact.recipe_box) ? artifact.recipe_box : []
-			})) ?? [];
+		const [aRes, oRes, rRes, avRes, tRes] = await Promise.all([
+			supabase.from('artifacts').select('*'),
+			supabase.from('origins').select('*').order('name'),
+			supabase.from('runes').select('*'),
+			supabase.from('guardians').select('id, name').order('name'),
+			supabase.from('artifact_tags').select('*').order('name')
+		]);
+
+		if (aRes.data) artifacts = aRes.data;
+		if (oRes.data) origins = oRes.data;
+		if (rRes.data) runes = rRes.data;
+		if (avRes.data) guardians = avRes.data;
+		if (tRes.data) tags = tRes.data;
 		loading = false;
 	}
 
-	function openArtifactForm(artifact?: Artifact) {
-		if (artifact) {
-			editingArtifact = artifact;
-			artifactForm = {
-				...artifact,
-				recipe_box: artifact.recipe_box ? artifact.recipe_box.map((entry) => ({ ...entry })) : []
-			};
+	function openCreate() {
+		editingArtifact = {
+			name: '',
+			benefit: '',
+			tag_ids: [],
+			recipe_box: [],
+			quantity: 1
+		};
+		isEditorOpen = true;
+	}
+
+	function openEdit(artifact: ArtifactRow) {
+		editingArtifact = {
+			...JSON.parse(JSON.stringify(artifact)),
+			recipe_box: artifact.recipe_box || [],
+			quantity: artifact.quantity ?? 1
+		};
+		isEditorOpen = true;
+	}
+
+	async function handleDelete(artifact: ArtifactRow) {
+		if (!confirm(`Delete "${artifact.name}"?`)) return;
+
+		const { error } = await supabase.from('artifacts').delete().eq('id', artifact.id);
+		if (error) {
+			console.error('Error deleting artifact:', error);
+			alert('Failed to delete artifact');
 		} else {
-			editingArtifact = null;
-			artifactForm = {
-				name: '',
-				benefit: '',
-				origin_id: origins[0]?.id ?? '',
-				recipe_box: []
-			};
-		}
-		showArtifactForm = true;
-	}
-
-	function closeArtifactForm() {
-		showArtifactForm = false;
-	}
-
-	function handleBackdropKey(event: KeyboardEvent) {
-		const target = event.target as HTMLElement;
-		const isInput =
-			target instanceof HTMLInputElement ||
-			target instanceof HTMLTextAreaElement ||
-			target instanceof HTMLSelectElement;
-		if (isInput) return;
-		if (event.key === 'Escape' || event.key === 'Enter' || event.key === ' ') {
-			event.preventDefault();
-			closeArtifactForm();
+			artifacts = artifacts.filter((a) => a.id !== artifact.id);
 		}
 	}
 
-	function handleBackdropClick(event: MouseEvent) {
-		if (event.target === event.currentTarget) {
-			closeArtifactForm();
-		}
-	}
-
-	async function handleSubmit(event: Event) {
-		event.preventDefault();
-		await saveArtifact();
-	}
-
-	function addRecipeEntry() {
-		if (!runes.length) {
-			alert('Create at least one rune before adding recipes.');
-			return;
-		}
-		const defaultRune = artifactForm.origin_id
-			? runes.find((rune) => rune.origin_id === artifactForm.origin_id) ?? runes[0]
-			: runes[0];
-		artifactForm.recipe_box = [
-			...artifactForm.recipe_box,
-			{ rune_id: defaultRune.id, quantity: 1 }
-		];
-	}
-
-	function updateRecipeRune(index: number, runeId: string) {
-		artifactForm.recipe_box = artifactForm.recipe_box.map((entry, i) =>
-			i === index ? { ...entry, rune_id: runeId } : entry
-		);
-	}
-
-	function updateRecipeQuantity(index: number, quantity: number) {
-		artifactForm.recipe_box = artifactForm.recipe_box.map((entry, i) =>
-			i === index ? { ...entry, quantity: Math.max(1, quantity) } : entry
-		);
-	}
-
-	function removeRecipeEntry(index: number) {
-		artifactForm.recipe_box = artifactForm.recipe_box.filter((_, i) => i !== index);
-	}
-
-	async function saveArtifact() {
-		if (!artifactForm.name?.trim()) {
-			alert('Artifact name is required.');
-			return;
-		}
-		if (!artifactForm.origin_id) {
-			alert('Select an origin for the artifact.');
-			return;
-		}
+	async function handleSave(event: CustomEvent<Partial<ArtifactRow>>) {
+		const toSave = event.detail;
+		// Validation?
+		if (!toSave.name) return alert('Name is required');
 
 		const payload = {
-			name: artifactForm.name.trim(),
-			benefit: artifactForm.benefit?.trim() ?? '',
-			origin_id: artifactForm.origin_id,
-			recipe_box: artifactForm.recipe_box.map((entry) => ({
-				rune_id: entry.rune_id,
-				quantity: Number(entry.quantity ?? 1)
-			}))
+			name: toSave.name,
+			benefit: toSave.benefit,
+		guardian_id: toSave.guardian_id,
+		tag_ids: toSave.tag_ids ?? [],
+			recipe_box: toSave.recipe_box,
+			quantity: toSave.quantity ?? 1
 		};
 
-		let saveError: string | null = null;
-		if (editingArtifact) {
-			const { error: updateError } = await supabase
+		if (toSave.id) {
+			// Update
+			const { error } = await supabase
 				.from('artifacts')
-				.update({ ...payload, updated_at: new Date().toISOString() })
-				.eq('id', editingArtifact.id);
-			saveError = updateError?.message ?? null;
+				.update(payload)
+				.eq('id', toSave.id);
+
+			if (error) {
+				console.error('Error updating:', error);
+				alert('Failed to update artifact');
+			} else {
+				await loadData(); // Reload to get fresh state
+				isEditorOpen = false;
+			}
 		} else {
-			const { error: insertError } = await supabase.from('artifacts').insert(payload);
-			saveError = insertError?.message ?? null;
-		}
+			// Create
+			const { error } = await supabase.from('artifacts').insert([payload]);
 
-		if (saveError) {
-			alert(`Failed to save artifact: ${saveError}`);
-			return;
-		}
-
-		closeArtifactForm();
-		await loadArtifacts();
-	}
-
-	async function deleteArtifact(artifact: Artifact) {
-		if (!confirm(`Delete artifact "${artifact.name}"?`)) return;
-		const { error: deleteError } = await supabase.from('artifacts').delete().eq('id', artifact.id);
-		if (deleteError) {
-			alert(`Failed to delete artifact: ${deleteError.message}`);
-			return;
-		}
-		await loadArtifacts();
-	}
-
-	const originName = (originId: string) => origins.find((origin) => origin.id === originId)?.name ?? '';
-	const runeName = (runeId: string) => runes.find((rune) => rune.id === runeId)?.name ?? 'Unknown rune';
-
-	$: filteredArtifacts = artifacts.filter((artifact) => {
-		if (originFilter !== 'all' && artifact.origin_id !== originFilter) return false;
-		if (search.trim()) {
-			const term = search.trim().toLowerCase();
-			if (
-				!artifact.name.toLowerCase().includes(term) &&
-				!artifact.benefit.toLowerCase().includes(term) &&
-				!originName(artifact.origin_id).toLowerCase().includes(term)
-			) {
-				return false;
+			if (error) {
+				console.error('Error creating:', error);
+				alert('Failed to create artifact');
+			} else {
+				await loadData();
+				isEditorOpen = false;
 			}
 		}
-		return true;
-	});
+	}
+
+	async function handleSaveTag(event: CustomEvent<Partial<ArtifactTagRow>>) {
+		const tag = event.detail;
+		if (tag.id) {
+			const { error } = await supabase
+				.from('artifact_tags')
+				.update({ name: tag.name, color: tag.color })
+				.eq('id', tag.id);
+			if (error) alert('Failed to update tag');
+		} else {
+			const { error } = await supabase
+				.from('artifact_tags')
+				.insert({ name: tag.name, color: tag.color });
+			if (error) alert('Failed to create tag');
+		}
+		await loadData();
+	}
+
+	async function handleDeleteTag(event: CustomEvent<ArtifactTagRow>) {
+		const tag = event.detail;
+		if (!confirm(`Delete tag "${tag.name}"?`)) return;
+		const { error } = await supabase.from('artifact_tags').delete().eq('id', tag.id);
+		if (error) alert('Failed to delete tag');
+		await loadData();
+	}
+
+	// Generate PNG cards for all artifacts
+	async function generateAllCards() {
+		if (!confirm(`Generate card images for all ${artifacts.length} artifacts? This may take a while.`)) {
+			return;
+		}
+
+		generatingAllCards = true;
+		generationProgress = { current: 0, total: artifacts.length };
+
+		const errors: string[] = [];
+		const successes: string[] = [];
+
+		for (let i = 0; i < artifacts.length; i++) {
+			const artifact = artifacts[i];
+			generationProgress.current = i + 1;
+
+			if (!artifact.id || !artifact.name) {
+				errors.push(`${artifact.name || 'Unknown'}: Missing ID or name`);
+				continue;
+			}
+
+			try {
+			// Generate PNG directly using Canvas API
+			const pngBlob = await generateArtifactCardPNG(artifact, origins, runes, tags, guardians);
+
+				// Convert blob to File
+				const fileName = `artifacts/${artifact.id}/card.png`;
+				const file = new File([pngBlob], 'card.png', { type: 'image/png' });
+
+				// Upload to Supabase storage
+				const { error: uploadError } = await supabase.storage
+					.from('game_assets')
+					.upload(fileName, file, {
+						contentType: 'image/png',
+						upsert: true,
+					});
+
+				if (uploadError) {
+					errors.push(`${artifact.name}: ${uploadError.message}`);
+					continue;
+				}
+
+				// Update artifact with card_image_path
+				const { error: updateError } = await supabase
+					.from('artifacts')
+					.update({
+						card_image_path: fileName,
+						updated_at: new Date().toISOString(),
+					})
+					.eq('id', artifact.id);
+
+				if (updateError) {
+					errors.push(`${artifact.name}: ${updateError.message}`);
+				} else {
+					successes.push(artifact.name);
+				}
+			} catch (error) {
+				errors.push(`${artifact.name}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+			}
+
+			// Small delay to prevent browser from freezing
+			await new Promise((resolve) => setTimeout(resolve, 50));
+		}
+
+		generatingAllCards = false;
+		generationProgress = { current: 0, total: 0 };
+
+		// Reload data to get updated card_image_path values
+		await loadData();
+
+		// Show results
+		const message = `Generated ${successes.length} card images successfully.\n${errors.length > 0 ? `\n${errors.length} errors:\n${errors.slice(0, 10).join('\n')}${errors.length > 10 ? `\n... and ${errors.length - 10} more` : ''}` : ''}`;
+		alert(message);
+	}
 </script>
 
-<section class="page">
-	<header class="page__header">
-		<div>
-			<h1>Artifacts</h1>
-			<p>Craft high-impact relics using rune recipes tied to origins.</p>
+<div class="artifacts-dashboard">
+	<aside class="sidebar-area">
+		<div class="sidebar-header">
+			<h2>Artifacts</h2>
+			<div class="header-actions">
+				<button class="btn-secondary" on:click={() => (isGalleryOpen = true)}>
+					View Gallery ({artifacts.filter((a) => a.card_image_path).length})
+				</button>
+				<button class="btn-secondary" on:click={generateAllCards} disabled={generatingAllCards || artifacts.length === 0}>
+					{generatingAllCards ? `Generating... (${generationProgress.current}/${generationProgress.total})` : 'Generate All Cards'}
+				</button>
+				<button class="btn-primary" on:click={openCreate}>+ New</button>
+			</div>
 		</div>
-		<div class="actions">
-			<button class="btn" onclick={() => openArtifactForm()}>Create Artifact</button>
-		</div>
-	</header>
+		<ArtifactFilterSidebar
+			bind:search
+			bind:tagFilter
+			bind:sortBy
+			bind:groupByTags
+			{tags}
+			on:openTagManager={() => (isTagManagerOpen = true)}
+		/>
+	</aside>
 
-	<section class="filters">
-		<label>
-			Search
-			<input type="search" placeholder="Search artifacts" bind:value={search} />
-		</label>
-		<label>
-			Origin
-			<select bind:value={originFilter}>
-				<option value="all">All origins</option>
-				{#each origins as origin}
-					<option value={origin.id}>{origin.name}</option>
+	<main class="grid-area">
+		{#if loading}
+			<div class="loading">Loading artifacts...</div>
+		{:else}
+			<div class="grid-header">
+				<span>{filteredArtifacts.length} Artifacts found</span>
+			</div>
+			<div class="grid-content">
+			{#if groupByTags && groupedByTags}
+				{#each groupedByTags as { tag, artifacts }}
+					<div class="tag-group">
+						<div class="tag-group-header">
+							<h3>{tag}</h3>
+							<span class="tag-group-count">{artifacts.length} artifact{artifacts.length !== 1 ? 's' : ''}</span>
+						</div>
+						<ArtifactGrid
+							artifacts={artifacts}
+							{origins}
+							guardians={guardians}
+							{runes}
+							{tags}
+							on:edit={(e) => openEdit(e.detail)}
+							on:delete={(e) => handleDelete(e.detail)}
+						/>
+					</div>
 				{/each}
-			</select>
-		</label>
-	</section>
-
-	{#if loading}
-		<div class="card">Loading artifacts…</div>
-	{:else if error}
-		<div class="card error">Error: {error}</div>
-	{:else}
-		<section class="card-grid">
-			{#each filteredArtifacts as artifact (artifact.id)}
-				<article class="card artifact-card">
-					<header>
-						<div>
-							<h2>{artifact.name}</h2>
-							<small>{originName(artifact.origin_id)}</small>
-						</div>
-						<div class="card-actions">
-							<button class="btn" onclick={() => openArtifactForm(artifact)}>Edit</button>
-							<button class="btn danger" onclick={() => deleteArtifact(artifact)}>Delete</button>
-						</div>
-					</header>
-					<p class="benefit">{artifact.benefit || 'No benefit description.'}</p>
-					<div class="recipe">
-						<h3>Recipe</h3>
-						{#if artifact.recipe_box.length}
-							<ul>
-								{#each artifact.recipe_box as entry, index (index)}
-									<li>
-										<span>{runeName(entry.rune_id)}</span>
-										<span class="quantity">×{entry.quantity}</span>
-									</li>
-								{/each}
-							</ul>
-						{:else}
-							<p class="muted">No rune requirements configured.</p>
-						{/if}
-					</div>
-				</article>
 			{:else}
-				<div class="card empty">No artifacts match the current filters.</div>
-			{/each}
-		</section>
-	{/if}
+				<ArtifactGrid
+					artifacts={filteredArtifacts}
+					{origins}
+					guardians={guardians}
+					{runes}
+					{tags}
+					on:edit={(e) => openEdit(e.detail)}
+					on:delete={(e) => handleDelete(e.detail)}
+				/>
+			{/if}
+			</div>
+		{/if}
+	</main>
 
-	{#if showArtifactForm}
-		<div
-			class="modal-backdrop"
-			role="button"
-			tabindex="0"
-			onclick={handleBackdropClick}
-			onkeydown={handleBackdropKey}
-		>
-			<form class="modal" onsubmit={handleSubmit}>
-				<h2>{editingArtifact ? 'Edit Artifact' : 'Create Artifact'}</h2>
-				<label>
-					Name
-					<input type="text" bind:value={artifactForm.name} required />
-				</label>
-				<label>
-					Origin
-					<select bind:value={artifactForm.origin_id} required>
-						<option value="">Select origin</option>
-						{#each origins as origin}
-							<option value={origin.id}>{origin.name}</option>
-						{/each}
-					</select>
-				</label>
-				<label>
-					Benefit
-					<textarea rows="3" bind:value={artifactForm.benefit} placeholder="Describe the artifact impact"></textarea>
-				</label>
-				<div class="recipe-editor">
-					<div class="recipe-editor__header">
-						<h3>Rune Recipe</h3>
-						<button class="btn" type="button" onclick={addRecipeEntry}>Add Rune</button>
-					</div>
-					{#if artifactForm.recipe_box.length === 0}
-						<p class="muted">No runes selected. Add runes to craft this artifact.</p>
-					{/if}
-					{#each artifactForm.recipe_box as entry, index (index)}
-						<div class="recipe-row">
-							<select
-								value={entry.rune_id}
-								onchange={(event) =>
-									updateRecipeRune(index, (event.currentTarget as HTMLSelectElement).value)}
-							>
-								{#each runes as rune}
-									<option value={rune.id}>{rune.name}</option>
-								{/each}
-							</select>
-							<input
-								type="number"
-								min="1"
-								value={entry.quantity}
-								oninput={(event) =>
-									updateRecipeQuantity(
-										index,
-										Number((event.currentTarget as HTMLInputElement).value)
-									)}
-							/>
-							<button
-								class="btn danger"
-								type="button"
-								onclick={() => removeRecipeEntry(index)}
-							>
-								Remove
-							</button>
-						</div>
-					{/each}
-				</div>
-				<div class="modal__actions">
-					<button class="btn" type="submit">Save</button>
-					<button class="btn" type="button" onclick={closeArtifactForm}>Cancel</button>
-				</div>
-			</form>
-		</div>
-	{/if}
-</section>
+	<ArtifactEditorDrawer
+		bind:isOpen={isEditorOpen}
+		artifact={editingArtifact}
+		{origins}
+		guardians={guardians}
+		{runes}
+		{tags}
+		on:save={handleSave}
+		on:close={() => (isEditorOpen = false)}
+	/>
+
+	<TagManager
+		bind:isOpen={isTagManagerOpen}
+		{tags}
+		on:save={handleSaveTag}
+		on:delete={handleDeleteTag}
+		on:close={() => (isTagManagerOpen = false)}
+	/>
+
+	<ArtifactCardGallery bind:isOpen={isGalleryOpen} {artifacts} />
+</div>
+
 
 <style>
-	.artifact-card header {
+	/* Break out of the parent container constraints if possible, 
+       but since we are inside a padded main, we just fill it. */
+	.artifacts-dashboard {
 		display: flex;
-		align-items: flex-start;
-		justify-content: space-between;
-		gap: 0.5rem;
+		height: calc(100vh - 6rem); /* Approximate height minus header/padding */
+		gap: 1rem;
+		margin: -1rem; /* Negative margin to counteract some parent padding if needed */
+		width: calc(100% + 2rem); /* Counteract negative margin to fill width */
 	}
 
-	.artifact-card h2 {
+	.sidebar-area {
+		width: 280px;
+		display: flex;
+		flex-direction: column;
+		background: rgba(15, 23, 42, 0.4);
+		border-radius: 12px;
+		border: 1px solid rgba(148, 163, 184, 0.1);
+		overflow: hidden;
+		flex-shrink: 0;
+	}
+
+	.sidebar-header {
+		padding: 1rem;
+		display: flex;
+		flex-direction: column;
+		gap: 0.75rem;
+		border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+		background: rgba(15, 23, 42, 0.6);
+	}
+
+	.sidebar-header h2 {
 		margin: 0;
+		font-size: 1.1rem;
 	}
 
-	.artifact-card small {
-		display: block;
-		color: #a5b4fc;
+	.header-actions {
+		display: flex;
+		gap: 0.5rem;
+		flex-wrap: wrap;
 	}
 
-	.benefit {
-		margin: 0.5rem 0 0;
-		color: #cbd5f5;
-		white-space: pre-wrap;
-	}
-
-	.recipe {
-		margin-top: 0.75rem;
-		background: rgba(30, 41, 59, 0.45);
-		border-radius: 10px;
-		padding: 0.75rem;
-		border: 1px solid rgba(148, 163, 184, 0.18);
-	}
-
-	.recipe h3 {
-		margin: 0 0 0.5rem;
+	.btn-secondary {
+		background: #64748b;
+		color: white;
+		border: none;
+		padding: 0.4rem 0.8rem;
+		border-radius: 6px;
 		font-size: 0.9rem;
-		text-transform: uppercase;
-		letter-spacing: 0.08em;
+		font-weight: 600;
+		cursor: pointer;
+		transition: background 0.2s;
+	}
+
+	.btn-secondary:hover:not(:disabled) {
+		background: #475569;
+	}
+
+	.btn-secondary:disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
+	}
+
+	.grid-area {
+		flex: 1;
+		display: flex;
+		flex-direction: column;
+		background: rgba(15, 23, 42, 0.2);
+		border-radius: 12px;
+		border: 1px solid rgba(148, 163, 184, 0.1);
+		overflow: hidden;
+		min-height: 0;
+	}
+
+	.grid-header {
+		padding: 0.75rem 1rem;
+		border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+		color: #94a3b8;
+		font-size: 0.9rem;
+		flex-shrink: 0;
+	}
+
+	.grid-content {
+		flex: 1;
+		overflow-y: auto;
+		min-height: 0;
+		padding: 1rem;
+	}
+
+	.loading {
+		padding: 2rem;
+		text-align: center;
 		color: #94a3b8;
 	}
 
-	.recipe ul {
-		margin: 0;
-		padding-left: 1.1rem;
-		display: grid;
-		gap: 0.3rem;
-	}
-
-	.quantity {
-		color: #f8fafc;
+	.btn-primary {
+		background: #3b82f6;
+		color: white;
+		border: none;
+		padding: 0.4rem 0.8rem;
+		border-radius: 6px;
+		font-size: 0.9rem;
 		font-weight: 600;
-		margin-left: 0.35rem;
+		cursor: pointer;
 	}
 
-	.recipe-editor {
-		display: flex;
-		flex-direction: column;
-		gap: 0.5rem;
-		padding: 0.75rem;
-		border-radius: 10px;
-		border: 1px dashed rgba(148, 163, 184, 0.3);
-		background: rgba(15, 23, 42, 0.55);
+	.tag-group {
+		margin-bottom: 2rem;
 	}
 
-	.recipe-editor__header {
+	.tag-group-header {
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
-		gap: 0.5rem;
+		margin-bottom: 1rem;
+		padding-bottom: 0.5rem;
+		border-bottom: 2px solid rgba(148, 163, 184, 0.2);
 	}
 
-	.recipe-editor__header h3 {
+	.tag-group-header h3 {
 		margin: 0;
-		font-size: 0.95rem;
-		color: #cbd5f5;
-	}
-
-	.recipe-row {
-		display: grid;
-		grid-template-columns: 1fr 100px auto;
-		gap: 0.5rem;
-	}
-
-	.recipe-row select,
-	.recipe-row input {
-		padding: 0.35rem 0.45rem;
-		border-radius: 6px;
-		border: 1px solid rgba(148, 163, 184, 0.3);
-		background: rgba(15, 23, 42, 0.65);
+		font-size: 1.25rem;
 		color: #f8fafc;
+		font-weight: 700;
 	}
 
-	.muted {
+	.tag-group-count {
+		font-size: 0.9rem;
 		color: #94a3b8;
-		margin: 0;
 	}
 
-	.error {
-		border-color: rgba(248, 113, 113, 0.45);
-		color: #fecaca;
+	@media (max-width: 768px) {
+		.artifacts-dashboard {
+			flex-direction: column;
+			height: auto;
+		}
+		.sidebar-area {
+			width: 100%;
+			height: auto;
+		}
 	}
 </style>

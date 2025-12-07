@@ -24,6 +24,7 @@ export type DiceFormData = {
 	color: string;
 	dice_type: DiceType;
 	dice_sides: DiceFormSide[];
+	background_image_path?: string | null;
 };
 
 export const DICE_TYPE_ICONS: Record<DiceType, string> = {
@@ -78,7 +79,8 @@ export function createInitialForm(type: DiceType = 'attack'): DiceFormData {
 		icon: DICE_TYPE_ICONS[type],
 		color: DEFAULT_COLOR,
 		dice_type: type,
-		dice_sides: normalizeSides(type)
+		dice_sides: normalizeSides(type),
+		background_image_path: null
 	};
 }
 
@@ -101,7 +103,8 @@ export function toFormData(dice: CustomDiceWithSides): DiceFormData {
 		icon: dice.icon ?? DICE_TYPE_ICONS[type],
 		color: dice.color ?? DEFAULT_COLOR,
 		dice_type: type,
-		dice_sides: normalizeSides(type, formSides)
+		dice_sides: normalizeSides(type, formSides),
+		background_image_path: dice.background_image_path ?? null
 	};
 }
 
@@ -109,7 +112,7 @@ export async function fetchDiceRecords(client: Rev2Client = supabase): Promise<C
 	const { data, error } = await client
 		.from('custom_dice')
 		.select(
-			'id, name, description, icon, color, dice_type, created_at, updated_at, dice_sides (id, dice_id, side_number, reward_type, reward_value, reward_description, icon, created_at)'
+			'id, name, description, icon, color, dice_type, background_image_path, created_at, updated_at, dice_sides (id, dice_id, side_number, reward_type, reward_value, reward_description, icon, image_path, template_x, template_y, created_at)'
 		)
 		.order('created_at', { ascending: false });
 
@@ -120,10 +123,13 @@ export async function fetchDiceRecords(client: Rev2Client = supabase): Promise<C
 	return (data ?? []).map((record) => ({
 		...record,
 		dice_type: record.dice_type === 'special' ? 'special' : 'attack',
-		dice_sides: (record.dice_sides ?? []).map((side: DiceSideRow) => ({
+		dice_sides: (record.dice_sides ?? []).map((side: any) => ({
 			...side,
+			image_path: side.image_path ?? null,
+			template_x: side.template_x ?? null,
+			template_y: side.template_y ?? null,
 			reward_type: side.reward_type === 'special' ? 'special' : 'attack'
-		}))
+		})) as DiceSideRow[]
 	})) as CustomDiceWithSides[];
 }
 
@@ -143,6 +149,7 @@ export async function saveDiceRecord(
 				icon: sanitized.icon,
 				color: sanitized.color,
 				dice_type: sanitized.dice_type,
+				background_image_path: sanitized.background_image_path ?? null,
 				updated_at: new Date().toISOString()
 			})
 			.eq('id', diceId);
@@ -158,7 +165,8 @@ export async function saveDiceRecord(
 				description: sanitized.description,
 				icon: sanitized.icon,
 				color: sanitized.color,
-				dice_type: sanitized.dice_type
+				dice_type: sanitized.dice_type,
+				background_image_path: sanitized.background_image_path ?? null
 			})
 			.select('id')
 			.single();
@@ -255,7 +263,7 @@ async function fetchDiceById(client: Rev2Client, id: string): Promise<CustomDice
 	const { data, error } = await client
 		.from('custom_dice')
 		.select(
-			'id, name, description, icon, color, dice_type, created_at, updated_at, dice_sides (id, dice_id, side_number, reward_type, reward_value, reward_description, icon, created_at)'
+			'id, name, description, icon, color, dice_type, background_image_path, created_at, updated_at, dice_sides (id, dice_id, side_number, reward_type, reward_value, reward_description, icon, image_path, template_x, template_y, created_at)'
 		)
 		.eq('id', id)
 		.maybeSingle();
@@ -271,9 +279,12 @@ async function fetchDiceById(client: Rev2Client, id: string): Promise<CustomDice
 	return {
 		...data,
 		dice_type: data.dice_type === 'special' ? 'special' : 'attack',
-		dice_sides: (data.dice_sides ?? []).map((side: DiceSideRow) => ({
+		dice_sides: (data.dice_sides ?? []).map((side: any) => ({
 			...side,
+			image_path: side.image_path ?? null,
+			template_x: side.template_x ?? null,
+			template_y: side.template_y ?? null,
 			reward_type: side.reward_type === 'special' ? 'special' : 'attack'
-		}))
+		})) as DiceSideRow[]
 	} as CustomDiceWithSides;
 }

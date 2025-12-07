@@ -8,13 +8,26 @@
 		{ href: '/', label: 'Overview', icon: '🏠' },
 		{ href: '/origins', label: 'Origins', icon: '🌌' },
 		{ href: '/classes', label: 'Classes', icon: '🛡️' },
-	{ href: '/runes', label: 'Runes', icon: '🔮' },
-	{ href: '/dice-simulator', label: 'Dice Lab', icon: '🎲' },
-	{ href: '/hex-spirits', label: 'Hex Spirits', icon: '⚔️' },
-	{ href: '/class-analysis', label: 'Class Analysis', icon: '📊' },
-	{ href: '/artifacts', label: 'Artifacts', icon: '🧩' },
-	{ href: '/avatar-spirits', label: 'Avatar Spirits', icon: '🕯️' }
-] as const;
+		{ href: '/editions', label: 'Editions', icon: '📦' },
+		{ href: '/runes', label: 'Runes', icon: '🔮' },
+		{ href: '/dice-simulator', label: 'Dice Lab', icon: '🎲' },
+		{ href: '/hex-spirits/cards', label: 'Hex Spirits', icon: '⚔️' },
+		{ href: '/monsters', label: 'Monsters', icon: '👹' },
+		{ href: '/class-analysis', label: 'Class Analysis', icon: '📊' },
+		{ href: '/curve-fitting', label: 'Curve Fitting', icon: '📐' },
+		{ href: '/alternative-dice', label: 'Alt Dice', icon: '🎯' },
+		{ href: '/shop-analysis', label: 'Shop Analysis', icon: '🛒' },
+		{ href: '/hex-spirits-analysis', label: 'Hex Spirits Analysis', icon: '📈' },
+		{ href: '/artifacts', label: 'Artifacts', icon: '🧩' },
+		{ href: '/artifact-generator', label: 'Artifact Generator', icon: '⚡' },
+		{ href: '/quests', label: 'Quests', icon: '🎯' },
+		{ href: '/guardians', label: 'Guardians', icon: '🕯️' },
+		{ href: '/icons', label: 'Icons', icon: '🖍️' },
+	{ href: '/misc-assets', label: 'Misc Assets', icon: '✨' },
+		{ href: '/assets', label: 'Assets', icon: '🖼️' },
+		{ href: '/json-viewer', label: 'JSON Viewer', icon: '📋' },
+		{ href: '/settings', label: 'Settings', icon: '⚙️' }
+	] as const;
 
 	export let children;
 	let isNavOpen = false;

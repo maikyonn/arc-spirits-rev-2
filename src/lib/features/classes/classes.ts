@@ -21,7 +21,8 @@ export interface ClassFormData {
 	id?: string;
 	name: string;
 	position: number;
-	icon: string;
+	icon_emoji: string;
+	icon_png: string | null;
 	color: string;
 	description: string;
 	footer: string;
@@ -30,7 +31,7 @@ export interface ClassFormData {
 	effect_schema: EffectBreakpoint[];
 }
 
-const DEFAULT_ICON = '🛡️';
+const DEFAULT_ICON_EMOJI = '🛡️';
 const DEFAULT_COLOR = '#8b5cf6';
 const EFFECT_COLORS: BreakpointColor[] = ['bronze', 'silver', 'gold', 'prismatic'];
 const EMPTY_PRISMATIC: PrismaticForm = { name: '', count: '', description: '' };
@@ -42,7 +43,8 @@ export function emptyClassForm(position = 1): ClassFormData {
 	return {
 		name: '',
 		position,
-		icon: DEFAULT_ICON,
+		icon_emoji: DEFAULT_ICON_EMOJI,
+		icon_png: null,
 		color: DEFAULT_COLOR,
 		description: '',
 		footer: '',
@@ -57,7 +59,8 @@ export function classRowToForm(row: ClassRow): ClassFormData {
 		id: row.id,
 		name: row.name,
 		position: row.position,
-		icon: row.icon ?? DEFAULT_ICON,
+		icon_emoji: row.icon_emoji ?? DEFAULT_ICON_EMOJI,
+		icon_png: row.icon_png,
 		color: row.color ?? DEFAULT_COLOR,
 		description: row.description ?? '',
 		footer: row.footer ?? '',
@@ -80,18 +83,19 @@ export async function saveClassRecord(
 	const sanitized = sanitizeClassForm(form);
 	let classId = sanitized.id;
 
-	const payload = {
+	const payload: Record<string, unknown> = {
 		name: sanitized.name,
 		position: sanitized.position,
-		icon: sanitized.icon ?? null,
+		icon_emoji: sanitized.icon_emoji ?? null,
+		icon_png: sanitized.icon_png ?? null,
 		color: sanitized.color ?? null,
 		description: sanitized.description ?? null,
 		footer: sanitized.footer ?? null,
-		tags: sanitized.tags.length ? sanitized.tags : null,
-		prismatic: sanitized.prismatic ?? null,
-		effect_schema: sanitized.effect_schema.length ? sanitized.effect_schema : null,
+		tags: sanitized.tags, // send empty array instead of null to satisfy array columns
+		effect_schema: sanitized.effect_schema, // always array for jsonb column
 		updated_at: new Date().toISOString()
 	};
+	// Only send prismatic if the column exists (omitted to avoid 400 on current schema)
 
 	if (classId) {
 		const { error } = await client.from('classes').update(payload).eq('id', classId);
@@ -244,7 +248,8 @@ function coerceEffect(raw: unknown): Effect | null {
 function sanitizeClassForm(form: ClassFormData): ClassFormData {
 	const name = form.name.trim();
 	const position = Number.isFinite(form.position) ? Math.max(1, Math.round(form.position)) : 1;
-	const icon = form.icon.trim() || DEFAULT_ICON;
+	const icon_emoji = form.icon_emoji.trim() || DEFAULT_ICON_EMOJI;
+	const icon_png = form.icon_png?.trim() || null;
 	const color = form.color.trim() || DEFAULT_COLOR;
 	const description = sanitizeMultiline(form.description);
 	const footer = sanitizeMultiline(form.footer);
@@ -255,7 +260,8 @@ function sanitizeClassForm(form: ClassFormData): ClassFormData {
 	return Object.assign({}, form, {
 		name,
 		position,
-		icon,
+		icon_emoji,
+		icon_png,
 		color,
 		description: description ?? '',
 		footer: footer ?? '',

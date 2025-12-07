@@ -19,7 +19,7 @@
 			<h2>Runes</h2>
 			<p>Manage rune stockpiles used for artifact crafting.</p>
 		</a>
-		<a class="card" href="/hex-spirits">
+		<a class="card" href="/hex-spirits/cards">
 			<h2>Hex Spirits</h2>
 			<p>Browse and edit playable spirits, their costs, and imagery.</p>
 		</a>
@@ -31,8 +31,8 @@
 			<h2>Artifacts</h2>
 			<p>Author artifact benefits and rune recipes.</p>
 		</a>
-		<a class="card" href="/avatar-spirits">
-			<h2>Avatar Spirits</h2>
+		<a class="card" href="/guardians">
+			<h2>Guardians</h2>
 			<p>Track special spirits linked to their origin.</p>
 		</a>
 	</div>

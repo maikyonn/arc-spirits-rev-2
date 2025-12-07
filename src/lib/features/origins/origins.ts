@@ -5,23 +5,25 @@ export interface OriginFormData {
 	id?: string;
 	name: string;
 	position: number;
-	icon: string;
+	icon_emoji: string;
+	icon_png: string | null;
+	icon_token_png: string | null;
 	color: string;
 	description: string;
-	footer: string;
 }
 
-const DEFAULT_ICON = '';
+const DEFAULT_ICON_EMOJI = '';
 const DEFAULT_COLOR = '#64748b';
 
 export function emptyOriginForm(position = 1): OriginFormData {
 	return {
 		name: '',
 		position,
-		icon: DEFAULT_ICON,
+		icon_emoji: DEFAULT_ICON_EMOJI,
+		icon_png: null,
+		icon_token_png: null,
 		color: DEFAULT_COLOR,
-		description: '',
-		footer: ''
+		description: ''
 	};
 }
 
@@ -30,10 +32,11 @@ export function originRowToForm(row: OriginRow): OriginFormData {
 		id: row.id,
 		name: row.name,
 		position: row.position,
-		icon: row.icon ?? DEFAULT_ICON,
+		icon_emoji: row.icon_emoji ?? DEFAULT_ICON_EMOJI,
+		icon_png: row.icon_png,
+		icon_token_png: row.icon_token_png,
 		color: row.color ?? DEFAULT_COLOR,
-		description: row.description ?? '',
-		footer: row.footer ?? ''
+		description: row.description ?? ''
 	};
 }
 
@@ -53,10 +56,11 @@ export async function saveOriginRecord(
 	const payload = {
 		name: sanitized.name,
 		position: sanitized.position,
-		icon: sanitized.icon || null,
+		icon_emoji: sanitized.icon_emoji || null,
+		icon_png: sanitized.icon_png || null,
+		icon_token_png: sanitized.icon_token_png || null,
 		color: sanitized.color || null,
 		description: sanitized.description || null,
-		footer: sanitized.footer || null,
 		updated_at: new Date().toISOString()
 	};
 
@@ -86,18 +90,20 @@ export async function deleteOriginRecord(id: string, client: Rev2Client = supaba
 function sanitizeOriginForm(form: OriginFormData): OriginFormData {
 	const name = form.name.trim();
 	const position = Number.isFinite(form.position) ? Math.max(1, Math.round(form.position)) : 1;
-	const icon = form.icon.trim();
+	const icon_emoji = form.icon_emoji.trim();
+	const icon_png = form.icon_png?.trim() || null;
+	const icon_token_png = form.icon_token_png?.trim() || null;
 	const color = form.color.trim() || DEFAULT_COLOR;
 	const description = form.description.replace(/\r\n/g, '\n').trim();
-	const footer = form.footer.replace(/\r\n/g, '\n').trim();
 
 	return {
 		...form,
 		name,
 		position,
-		icon,
+		icon_emoji,
+		icon_png,
+		icon_token_png,
 		color,
-		description,
-		footer
+		description
 	};
 }

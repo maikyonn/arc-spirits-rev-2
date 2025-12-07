@@ -5,9 +5,16 @@ export interface HexSpiritFormData {
 	id?: string;
 	name: string;
 	cost: number;
-	origin_id: string | null;
-	class_id: string | null;
-	image_path: string | null;
+	origin_id?: string | null; // UI convenience
+	class_id?: string | null; // UI convenience
+	traits: {
+		origin_ids: string[];
+		class_ids: string[];
+	};
+	game_print_image_path: string | null;
+	art_raw_image_path: string | null;
+	/** Optional override for the PSD folder used during Photoshop export */
+	psd_folder_override: string | null;
 }
 
 const DEFAULT_COST = 1;
@@ -18,26 +25,35 @@ export function emptyHexSpiritForm(): HexSpiritFormData {
 		cost: DEFAULT_COST,
 		origin_id: null,
 		class_id: null,
-		image_path: null
+		traits: { origin_ids: [], class_ids: [] },
+		game_print_image_path: null,
+		art_raw_image_path: null,
+		psd_folder_override: null
 	};
 }
 
 export function hexSpiritRowToForm(row: HexSpiritRow): HexSpiritFormData {
+	// Load traits directly - duplicates are allowed
+	const origin_ids = row.traits?.origin_ids ?? [];
+	const class_ids = row.traits?.class_ids ?? [];
+	
 	return {
 		id: row.id,
 		name: row.name,
 		cost: row.cost,
-		origin_id: row.origin_id,
-		class_id: row.class_id,
-		image_path: row.image_path
+		origin_id: origin_ids[0] ?? null, // UI convenience only
+		class_id: class_ids[0] ?? null, // UI convenience only
+		traits: { origin_ids, class_ids },
+		game_print_image_path: row.game_print_image_path,
+		art_raw_image_path: row.art_raw_image_path,
+		psd_folder_override: row.psd_folder_override,
 	};
 }
 
-export async function fetchHexSpiritRecords(client: Rev2Client = supabase): Promise<HexSpiritRow[]> {
-	const { data, error } = await client
-		.from('hex_spirits')
-		.select('*')
-		.order('name', { ascending: true });
+export async function fetchHexSpiritRecords(
+	client: Rev2Client = supabase
+): Promise<HexSpiritRow[]> {
+	const { data, error } = await client.from('hex_spirits').select('*').order('name', { ascending: true });
 	if (error) throw error;
 	return data ?? [];
 }
@@ -52,9 +68,10 @@ export async function saveHexSpiritRecord(
 	const payload = {
 		name: sanitized.name,
 		cost: sanitized.cost,
-		origin_id: sanitized.origin_id,
-		class_id: sanitized.class_id,
-		image_path: sanitized.image_path,
+		traits: sanitized.traits,
+		game_print_image_path: sanitized.game_print_image_path,
+		art_raw_image_path: sanitized.art_raw_image_path,
+		psd_folder_override: sanitized.psd_folder_override,
 		updated_at: new Date().toISOString()
 	};
 
@@ -83,17 +100,24 @@ export async function deleteHexSpiritRecord(id: string, client: Rev2Client = sup
 
 function sanitizeHexSpiritForm(form: HexSpiritFormData): HexSpiritFormData {
 	const name = form.name.trim();
-	const cost = Number.isFinite(form.cost) ? Math.max(0, Math.round(form.cost)) : DEFAULT_COST;
-	const origin_id = form.origin_id || null;
-	const class_id = form.class_id || null;
-	const image_path = form.image_path?.trim() || null;
+	const cost = Number.isFinite(form.cost) ? Math.max(1, Math.round(form.cost)) : DEFAULT_COST;
+	
+	// Use traits directly - the page manages origin_ids and class_ids arrays
+	// Duplicates are allowed (e.g., 2x of the same origin)
+	const origin_ids = (form.traits?.origin_ids ?? []).filter((v): v is string => Boolean(v));
+	const class_ids = (form.traits?.class_ids ?? []).filter((v): v is string => Boolean(v));
+	
+	const game_print_image_path = form.game_print_image_path?.trim() || null;
+	const art_raw_image_path = form.art_raw_image_path?.trim() || null;
+	const psd_folder_override = form.psd_folder_override?.trim() || null;
 
 	return {
 		...form,
 		name,
 		cost,
-		origin_id,
-		class_id,
-		image_path
+		traits: { origin_ids, class_ids },
+		game_print_image_path,
+		art_raw_image_path,
+		psd_folder_override
 	};
 }

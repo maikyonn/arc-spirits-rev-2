@@ -15,6 +15,15 @@ type DiceLookup = {
 };
 
 const DEFAULT_TRIALS = 1000;
+export const DEFAULT_MAX_SORCERER_RUNES = 4;
+const SORCERER_NAME = 'sorcerer';
+
+export interface ClassSimulationOptions {
+	trials?: number;
+	runeCount?: number;
+	maxRuneCount?: number;
+	className?: string;
+}
 
 function buildDiceLookup(records: CustomDiceWithSides[]): DiceLookup {
 	const byId = new Map<string, CustomDiceWithSides>();
@@ -39,13 +48,17 @@ function normalizeNumericCount(value: EffectBreakpoint['count']): number | null 
 
 function sampleDie(dice: CustomDiceWithSides): number {
 	if (!dice.dice_sides.length) return 0;
-	const index = Math.floor(Math.random() * dice.dice_sides.length);
-	const side = dice.dice_sides[index];
-	const value = Number(side.reward_value);
-	if (!Number.isFinite(value) || value === 100) {
-		return 0; // Ignore special cases and non-numeric values
+
+	const numericSides = dice.dice_sides
+		.map((side) => Number(side.reward_value))
+		.filter((value) => Number.isFinite(value) && value !== 100);
+
+	if (!numericSides.length) {
+		return 0;
 	}
-	return value;
+
+	const index = Math.floor(Math.random() * numericSides.length);
+	return numericSides[index];
 }
 
 function resolveDice(effect: DiceEffect, lookup: DiceLookup): CustomDiceWithSides | undefined {
@@ -62,16 +75,18 @@ function resolveDice(effect: DiceEffect, lookup: DiceLookup): CustomDiceWithSide
 export function simulateClassBreakpoints(
 	breakpoints: EffectBreakpoint[],
 	diceRecords: CustomDiceWithSides[],
-	trials: number = DEFAULT_TRIALS
+	options: ClassSimulationOptions = {}
 ): BreakpointSimulationResult[] {
+	const trials = Math.max(1, Math.floor(options.trials ?? DEFAULT_TRIALS));
 	const lookup = buildDiceLookup(diceRecords);
-	return breakpoints.map((bp) => simulateBreakpoint(bp, lookup, trials));
+	return breakpoints.map((bp) => simulateBreakpoint(bp, lookup, trials, options));
 }
 
 function simulateBreakpoint(
 	breakpoint: EffectBreakpoint,
 	lookup: DiceLookup,
-	trials: number
+	trials: number,
+	options: ClassSimulationOptions
 ): BreakpointSimulationResult {
 	const results = new Array<number>(trials);
 	for (let trial = 0; trial < trials; trial += 1) {
@@ -84,7 +99,7 @@ function simulateBreakpoint(
 					const diceEffect = effect as DiceEffect;
 					const dice = resolveDice(diceEffect, lookup);
 					if (!dice) return;
-					const quantity = Math.max(0, Math.floor(diceEffect.quantity ?? 0));
+					const quantity = getScaledDiceQuantity(diceEffect, options);
 					for (let i = 0; i < quantity; i += 1) {
 						total += sampleDie(dice);
 					}
@@ -131,4 +146,37 @@ function simulateBreakpoint(
 		variance,
 		sd
 	};
+}
+
+export function getScaledDiceQuantity(
+	effect: DiceEffect,
+	options: ClassSimulationOptions = {}
+): number {
+	const baseQuantity = Math.max(0, Math.floor(effect.quantity ?? 0));
+	if (baseQuantity === 0) return 0;
+	if (!options.className) return baseQuantity;
+
+	const isSorcerer = options.className.trim().toLowerCase() === SORCERER_NAME;
+	if (!isSorcerer) return baseQuantity;
+
+	if (!isSorcererScalingDice(effect)) {
+		return baseQuantity;
+	}
+
+	const runeCount = clampRuneCount(options.runeCount ?? DEFAULT_MAX_SORCERER_RUNES, options);
+	if (runeCount <= 0) {
+		return 0;
+	}
+
+	return baseQuantity * runeCount;
+}
+
+function clampRuneCount(value: number, options: ClassSimulationOptions): number {
+	if (!Number.isFinite(value)) return 0;
+	const maxRunes = Math.max(1, Math.floor(options.maxRuneCount ?? DEFAULT_MAX_SORCERER_RUNES));
+	return Math.min(maxRunes, Math.max(0, Math.floor(value)));
+}
+
+export function isSorcererScalingDice(_effect: DiceEffect): boolean {
+	return true;
 }

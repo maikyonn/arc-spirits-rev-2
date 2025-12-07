@@ -123,9 +123,12 @@ Collectible runes associated with origins.
 | `id` | uuid (PK) | Unique identifier |
 | `name` | text | Rune name |
 | `benefit` | text | Rune effect description |
-| `origin_id` | uuid (FK) | References `origins.id` |
+| `origin_id` | uuid (FK, nullable) | References `origins.id`; null when linked to a guardian or lost |
+| `guardian_id` | uuid (FK, nullable) | References `guardians.id`; null unless guardian-linked |
 | `created_at` | timestamp | Creation timestamp |
 | `updated_at` | timestamp | Last update timestamp |
+
+Artifacts with neither `origin_id` nor `guardian_id` are treated as **Lost**, and their `recipe_box` must remain empty (they cannot be crafted).
 
 #### `artifacts`
 Craftable artifacts created from runes.
@@ -140,14 +143,15 @@ Craftable artifacts created from runes.
 | `created_at` | timestamp | Creation timestamp |
 | `updated_at` | timestamp | Last update timestamp |
 
-#### `avatar_spirits`
-Avatar spirits linked to origins.
+#### `guardians`
+Guardians linked to origins.
 
 | Column | Type | Description |
 |--------|------|-------------|
 | `id` | uuid (PK) | Unique identifier |
-| `name` | text | Avatar spirit name |
+| `name` | text | Guardian name |
 | `origin_id` | uuid (FK) | References `origins.id` |
+| `image_mat_path` | text | Optional path to image mat |
 | `created_at` | timestamp | Creation timestamp |
 | `updated_at` | timestamp | Last update timestamp |
 
