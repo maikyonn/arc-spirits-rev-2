@@ -48,12 +48,13 @@ type EventRow = {
   card_image_path: string | null;
 };
 
-type BoardRow = {
+type MiscAssetRow = {
   id: string;
   name: string;
   file_path: string | null;
   file_type: string | null;
   file_size: number | null;
+  category: string | null;
 };
 
 type EditionRow = {
@@ -69,6 +70,67 @@ type RuneRow = {
   origin_id: string | null;
   class_id: string | null;
   icon_path: string | null;
+};
+
+type CustomDiceRow = {
+  id: string;
+  name: string;
+  description: string | null;
+  icon: string | null;
+  color: string | null;
+  dice_type: "attack" | "special";
+  background_image_path: string | null;
+  exported_template_path: string | null;
+};
+
+type DiceSideRow = {
+  id: string;
+  dice_id: string;
+  side_number: number;
+  reward_type: "attack" | "special";
+  reward_value: string;
+  reward_description: string | null;
+};
+
+type ClassRow = {
+  id: string;
+  name: string;
+  position: number;
+  icon_emoji: string | null;
+  icon_png: string | null;
+  color: string | null;
+  description: string | null;
+  tags: string[] | null;
+  effect_schema: unknown | null;
+  footer: string | null;
+};
+
+type OriginRow = {
+  id: string;
+  name: string;
+  position: number;
+  color: string | null;
+  description: string | null;
+  icon_png: string | null;
+  calling_card: {
+    enabled: boolean;
+    hex_spirit_id: string | null;
+    breakpoints: { count: number; label?: string; icon_ids: string[] }[];
+  } | null;
+};
+
+type CallingOrbImageRow = {
+  id: string;
+  origin_id: string;
+  image_path: string;
+};
+
+type HexSpiritBasic = {
+  id: string;
+  name: string;
+  cost: number;
+  game_print_image_path: string | null;
+  traits: { origin_ids?: string[]; class_ids?: string[] } | null;
 };
 
 const SCHEMA = "arc-spirits-rev2";
@@ -115,7 +177,7 @@ serve(async (req) => {
     const editionOriginIds = edition.origin_ids ?? [];
     const costDuplicates = edition.cost_duplicates ?? {};
 
-    const [originsRes, classesRes, tagsRes, guardiansRes, monstersRes, eventsRes, boardsRes, spiritsRes, artifactsRes, runesRes] = await Promise.all([
+    const [originsRes, classesRes, tagsRes, guardiansRes, monstersRes, eventsRes, miscAssetsRes, spiritsRes, artifactsRes, runesRes, originsFullRes, callingOrbsRes, hexSpiritsBasicRes, customDiceRes, classesFullRes, diceSidesRes] = await Promise.all([
       client.queryObject<NamedId>(`select id, name from "${SCHEMA}".origins`),
       client.queryObject<NamedId>(`select id, name from "${SCHEMA}".classes`),
       client.queryObject<NamedId>(`select id, name from "${SCHEMA}".artifact_tags`),
@@ -128,12 +190,24 @@ serve(async (req) => {
       client.queryObject<EventRow>(
         `select id, name, title, description, order_num, card_image_path from "${SCHEMA}".events`
       ),
-      client.queryObject<BoardRow>(
-        `select id, name, file_path, file_type, file_size from "${SCHEMA}".misc_assets where category IN ('board', 'status')`
+      client.queryObject<MiscAssetRow>(
+        `select id, name, file_path, file_type, file_size, category from "${SCHEMA}".misc_assets order by category, name`
       ),
       client.queryObject<SpiritRow>(`select id, name, cost, traits, game_print_image_path from "${SCHEMA}".hex_spirits`),
       client.queryObject<ArtifactRow>(`select id, name, recipe_box, guardian_id, tag_ids, card_image_path from "${SCHEMA}".artifacts`),
       client.queryObject<RuneRow>(`select id, name, origin_id, class_id, icon_path from "${SCHEMA}".runes`),
+      // Full origins with calling card data
+      client.queryObject<OriginRow>(`select id, name, position, color, description, icon_png, calling_card from "${SCHEMA}".origins order by position`),
+      // Calling orb images
+      client.queryObject<CallingOrbImageRow>(`select id, origin_id, image_path from "${SCHEMA}".calling_orb_images`),
+      // Basic hex spirit info for calling card associations
+      client.queryObject<HexSpiritBasic>(`select id, name, cost, game_print_image_path, traits from "${SCHEMA}".hex_spirits`),
+      // Custom dice with their prefab templates
+      client.queryObject<CustomDiceRow>(`select id, name, description, icon, color, dice_type, background_image_path, exported_template_path from "${SCHEMA}".custom_dice`),
+      // Full classes with effect schema (contains dice_id references in breakpoints)
+      client.queryObject<ClassRow>(`select id, name, position, icon_emoji, icon_png, color, description, tags, effect_schema, footer from "${SCHEMA}".classes order by position`),
+      // Dice sides for face value counts
+      client.queryObject<DiceSideRow>(`select id, dice_id, side_number, reward_type, reward_value, reward_description from "${SCHEMA}".dice_sides order by dice_id, side_number`),
     ]);
 
     const originMap = new Map(originsRes.rows.map((r) => [r.id, r.name]));
@@ -141,16 +215,78 @@ serve(async (req) => {
     const tagMap = new Map(tagsRes.rows.map((r) => [r.id, r.name]));
     const base = storageRenderBaseUrl(req);
 
+    // Build calling orb images map (origin_id -> image_path)
+    const callingOrbMap = new Map(callingOrbsRes.rows.map((r) => [r.origin_id, r.image_path]));
+
+    // Build hex spirits map for calling card associations
+    const hexSpiritMap = new Map(hexSpiritsBasicRes.rows.map((r) => [r.id, r]));
+
+    // Build dice sides map (dice_id -> sides array)
+    const diceSidesMap = new Map<string, DiceSideRow[]>();
+    for (const side of diceSidesRes.rows) {
+      const existing = diceSidesMap.get(side.dice_id) ?? [];
+      existing.push(side);
+      diceSidesMap.set(side.dice_id, existing);
+    }
+
+    // Map origins with calling cards and calling orb images
+    const origins = originsFullRes.rows.map((o) => {
+      const icon_url = o.icon_png ? `${base}${encodeURI(o.icon_png)}?quality=30` : null;
+      const callingOrbPath = callingOrbMap.get(o.id);
+      const calling_orb_image_url = callingOrbPath ? `${base}${encodeURI(callingOrbPath)}?quality=30` : null;
+
+      // Get associated hex spirit if calling card is enabled
+      // Structure matches the hex_spirits array output exactly
+      let associated_hex_spirit = null;
+      if (o.calling_card?.enabled && o.calling_card?.hex_spirit_id) {
+        const spirit = hexSpiritMap.get(o.calling_card.hex_spirit_id);
+        if (spirit) {
+          const spiritOriginIds = spirit.traits?.origin_ids ?? [];
+          const spiritClassIds = spirit.traits?.class_ids ?? [];
+          associated_hex_spirit = {
+            id: spirit.id,
+            name: spirit.name,
+            cost: spirit.cost,
+            traits: {
+              origins: spiritOriginIds.map((id) => ({ id, name: originMap.get(id) ?? null })),
+              classes: spiritClassIds.map((id) => ({ id, name: classMap.get(id) ?? null })),
+            },
+            image_url: spirit.game_print_image_path
+              ? `${base}${encodeURI(spirit.game_print_image_path)}?quality=30`
+              : null,
+          };
+        }
+      }
+
+      return {
+        id: o.id,
+        name: o.name,
+        position: o.position,
+        color: o.color,
+        description: o.description,
+        icon_url,
+        calling_card: o.calling_card?.enabled
+          ? {
+              enabled: true,
+              breakpoints: o.calling_card.breakpoints,
+              hex_spirit_id: o.calling_card.hex_spirit_id,
+            }
+          : null,
+        calling_orb_image_url,
+        associated_hex_spirit,
+      };
+    });
+
     const guardians = guardiansRes.rows.map((g) => {
       const origin_name = g.origin_id ? originMap.get(g.origin_id) ?? null : null;
       const mat_image_url = g.image_mat_path
-        ? `${base}${encodeURI(g.image_mat_path)}?quality=80`
+        ? `${base}${encodeURI(g.image_mat_path)}?quality=30`
         : null;
       const chibi_image_url = g.chibi_image_path
-        ? `${base}${encodeURI(g.chibi_image_path)}?quality=80`
+        ? `${base}${encodeURI(g.chibi_image_path)}?quality=30`
         : null;
       const icon_image_url = g.icon_image_path
-        ? `${base}${encodeURI(g.icon_image_path)}?quality=80`
+        ? `${base}${encodeURI(g.icon_image_path)}?quality=30`
         : null;
       return {
         name: g.name,
@@ -182,7 +318,7 @@ serve(async (req) => {
       const origins = spiritOriginIds.map((id) => ({ id, name: originMap.get(id) ?? null }));
       const classes = (s.traits?.class_ids ?? []).map((id) => ({ id, name: classMap.get(id) ?? null }));
       const image_url = s.game_print_image_path
-        ? `${base}${encodeURI(s.game_print_image_path)}?quality=80`
+        ? `${base}${encodeURI(s.game_print_image_path)}?quality=30`
         : null;
 
       // Get duplicate count for this spirit's cost (default to 1)
@@ -205,7 +341,7 @@ serve(async (req) => {
       const tag_ids = a.tag_ids ?? [];
       const tag_names = tag_ids.map((id) => tagMap.get(id) ?? null);
       const image_path = a.card_image_path
-        ? `${base}${encodeURI(a.card_image_path)}?quality=80`
+        ? `${base}${encodeURI(a.card_image_path)}?quality=30`
         : null;
       return {
         id: a.id,
@@ -221,7 +357,7 @@ serve(async (req) => {
     // Map monsters
     const monsterCards = monstersRes.rows.map((m) => {
       const image_url = m.card_image_path
-        ? `${base}${encodeURI(m.card_image_path)}?quality=80`
+        ? `${base}${encodeURI(m.card_image_path)}?quality=30`
         : null;
       return {
         id: m.id,
@@ -238,7 +374,7 @@ serve(async (req) => {
     // Map events (same structure as monsters for TTS compatibility)
     const eventCards = eventsRes.rows.map((e) => {
       const image_url = e.card_image_path
-        ? `${base}${encodeURI(e.card_image_path)}?quality=80`
+        ? `${base}${encodeURI(e.card_image_path)}?quality=30`
         : null;
       return {
         id: e.id,
@@ -260,22 +396,37 @@ serve(async (req) => {
       (a, b) => (a.order_num ?? 999) - (b.order_num ?? 999)
     );
 
-    const boards = boardsRes.rows.map((b) => {
-      const image_url = b.file_path ? `${base}${encodeURI(b.file_path)}?quality=80` : null;
-      return {
-        id: b.id,
-        name: b.name,
-        file_type: b.file_type,
-        file_size: b.file_size,
+    // Group misc assets by category
+    const miscAssetsByCategory: Record<string, {
+      id: string;
+      name: string;
+      file_type: string | null;
+      file_size: number | null;
+      image_url: string | null;
+    }[]> = {};
+
+    for (const asset of miscAssetsRes.rows) {
+      const category = asset.category ?? "uncategorized";
+      const image_url = asset.file_path ? `${base}${encodeURI(asset.file_path)}?quality=30` : null;
+
+      if (!miscAssetsByCategory[category]) {
+        miscAssetsByCategory[category] = [];
+      }
+
+      miscAssetsByCategory[category].push({
+        id: asset.id,
+        name: asset.name,
+        file_type: asset.file_type,
+        file_size: asset.file_size,
         image_url,
-      };
-    });
+      });
+    }
 
     // Map runes with origin/class names resolved
     const runes = runesRes.rows.map((r) => {
       const origin_name = r.origin_id ? originMap.get(r.origin_id) ?? null : null;
       const class_name = r.class_id ? classMap.get(r.class_id) ?? null : null;
-      const icon_url = r.icon_path ? `${base}${encodeURI(r.icon_path)}?quality=80` : null;
+      const icon_url = r.icon_path ? `${base}${encodeURI(r.icon_path)}?quality=30` : null;
       return {
         id: r.id,
         name: r.name,
@@ -288,6 +439,50 @@ serve(async (req) => {
       };
     });
 
+    // Map custom dice with prefab template URLs and face counts
+    const custom_dice = customDiceRes.rows.map((d) => {
+      const prefab_image_url = d.exported_template_path
+        ? `${base}${encodeURI(d.exported_template_path)}?quality=30`
+        : null;
+
+      // Get sides for this dice and build faces array
+      const sides = diceSidesMap.get(d.id) ?? [];
+      const faces = sides.map((s) => ({
+        side_number: s.side_number,
+        reward_type: s.reward_type,
+        reward_value: s.reward_value,
+        reward_description: s.reward_description,
+      }));
+
+      return {
+        id: d.id,
+        name: d.name,
+        description: d.description,
+        icon: d.icon,
+        color: d.color,
+        dice_type: d.dice_type,
+        prefab_image_url,
+        faces,
+      };
+    });
+
+    // Map classes with effect schema (contains dice_id references in breakpoints)
+    const classes = classesFullRes.rows.map((c) => {
+      const icon_url = c.icon_png ? `${base}${encodeURI(c.icon_png)}?quality=30` : null;
+      return {
+        id: c.id,
+        name: c.name,
+        position: c.position,
+        icon_emoji: c.icon_emoji,
+        icon_url,
+        color: c.color,
+        description: c.description,
+        tags: c.tags,
+        effect_schema: c.effect_schema,
+        footer: c.footer,
+      };
+    });
+
     const body = stringify({
       exported_at: new Date().toISOString(),
       edition: {
@@ -295,12 +490,15 @@ serve(async (req) => {
         origin_count: editionOriginIds.length,
         cost_duplicates: costDuplicates,
       },
+      origins,
+      classes,
       hex_spirits,
       artifacts,
-      boards,
+      misc_assets: miscAssetsByCategory,
       monsters,
       guardians,
       runes,
+      custom_dice,
     });
 
     const lastModified = new Date().toUTCString();
