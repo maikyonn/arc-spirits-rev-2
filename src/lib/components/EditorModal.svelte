@@ -162,6 +162,7 @@
 	.editor-modal__body {
 		padding: 0 1.25rem 1.25rem;
 		overflow-y: auto;
+		overflow-x: visible;
 		display: flex;
 		flex-direction: column;
 		gap: 0.85rem;

@@ -1,5 +1,5 @@
 import { supabase, type Rev2Client } from '$lib/api/supabaseClient';
-import type { OriginRow } from '$lib/types/gameData';
+import type { OriginRow, CallingCard, Json } from '$lib/types/gameData';
 
 export interface OriginFormData {
 	id?: string;
@@ -10,6 +10,7 @@ export interface OriginFormData {
 	icon_token_png: string | null;
 	color: string;
 	description: string;
+	calling_card: CallingCard | null;
 }
 
 const DEFAULT_ICON_EMOJI = '';
@@ -23,7 +24,8 @@ export function emptyOriginForm(position = 1): OriginFormData {
 		icon_png: null,
 		icon_token_png: null,
 		color: DEFAULT_COLOR,
-		description: ''
+		description: '',
+		calling_card: null
 	};
 }
 
@@ -36,7 +38,48 @@ export function originRowToForm(row: OriginRow): OriginFormData {
 		icon_png: row.icon_png,
 		icon_token_png: row.icon_token_png,
 		color: row.color ?? DEFAULT_COLOR,
-		description: row.description ?? ''
+		description: row.description ?? '',
+		calling_card: parseCallingCard(row.calling_card)
+	};
+}
+
+function parseCallingCard(json: Json | null): CallingCard | null {
+	if (!json || typeof json !== 'object' || Array.isArray(json)) {
+		return null;
+	}
+
+	const obj = json as Record<string, unknown>;
+
+	if (typeof obj.enabled !== 'boolean') {
+		return null;
+	}
+
+	if (!Array.isArray(obj.breakpoints)) {
+		return null;
+	}
+
+	const breakpoints = obj.breakpoints
+		.filter((bp): bp is Record<string, unknown> => typeof bp === 'object' && bp !== null && !Array.isArray(bp))
+		.map((bp) => {
+			const count = typeof bp.count === 'number' ? bp.count : 0;
+			const label = typeof bp.label === 'string' ? bp.label : undefined;
+			const icon_ids = Array.isArray(bp.icon_ids)
+				? bp.icon_ids.filter((id): id is string => typeof id === 'string')
+				: [];
+
+			return {
+				count,
+				label,
+				icon_ids
+			};
+		});
+
+	const hex_spirit_id = typeof obj.hex_spirit_id === 'string' ? obj.hex_spirit_id : null;
+
+	return {
+		enabled: obj.enabled,
+		hex_spirit_id,
+		breakpoints
 	};
 }
 
@@ -61,6 +104,7 @@ export async function saveOriginRecord(
 		icon_token_png: sanitized.icon_token_png || null,
 		color: sanitized.color || null,
 		description: sanitized.description || null,
+		calling_card: sanitized.calling_card as Json | null,
 		updated_at: new Date().toISOString()
 	};
 

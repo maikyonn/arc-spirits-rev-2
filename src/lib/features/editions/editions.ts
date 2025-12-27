@@ -40,7 +40,7 @@ export function editionRowToForm(row: EditionRow): EditionFormData {
 		name: row.name,
 		description: row.description ?? '',
 		origin_ids: row.origin_ids ?? [],
-		cost_duplicates: row.cost_duplicates ?? { ...DEFAULT_COST_DUPLICATES },
+		cost_duplicates: { ...DEFAULT_COST_DUPLICATES, ...(row.cost_duplicates ?? {}) },
 		is_default: row.is_default
 	};
 }

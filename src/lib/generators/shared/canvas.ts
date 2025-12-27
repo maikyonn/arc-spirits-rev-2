@@ -1,0 +1,254 @@
+/**
+ * Shared canvas utility functions for image generation
+ */
+
+/**
+ * Creates a canvas element with the specified dimensions
+ */
+export function createCanvas(width: number, height: number): HTMLCanvasElement {
+	const canvas = document.createElement('canvas');
+	canvas.width = width;
+	canvas.height = height;
+	return canvas;
+}
+
+/**
+ * Gets 2D context from a canvas with error handling
+ */
+export function getContext(canvas: HTMLCanvasElement): CanvasRenderingContext2D {
+	const ctx = canvas.getContext('2d');
+	if (!ctx) {
+		throw new Error('Could not get canvas 2D context');
+	}
+	return ctx;
+}
+
+/**
+ * Loads an image from a URL with CORS support
+ */
+export function loadImage(url: string): Promise<HTMLImageElement> {
+	return new Promise((resolve, reject) => {
+		const img = new Image();
+		img.crossOrigin = 'anonymous';
+		img.onload = () => resolve(img);
+		img.onerror = reject;
+		img.src = url;
+	});
+}
+
+/**
+ * Loads an image from a Blob
+ */
+export function loadImageFromBlob(blob: Blob): Promise<HTMLImageElement> {
+	return new Promise((resolve, reject) => {
+		const url = URL.createObjectURL(blob);
+		const img = new Image();
+		img.onload = () => {
+			URL.revokeObjectURL(url);
+			resolve(img);
+		};
+		img.onerror = (err) => {
+			URL.revokeObjectURL(url);
+			reject(err);
+		};
+		img.src = url;
+	});
+}
+
+/**
+ * Converts a canvas to a Blob
+ * @param canvas - The canvas element to convert
+ * @param type - MIME type (default: 'image/png')
+ * @param quality - Quality for lossy formats like JPEG (0-1, default: 0.92)
+ */
+export function canvasToBlob(canvas: HTMLCanvasElement, type = 'image/png', quality?: number): Promise<Blob> {
+	return new Promise((resolve, reject) => {
+		canvas.toBlob(
+			(blob) => {
+				if (blob) {
+					resolve(blob);
+				} else {
+					reject(new Error('Failed to convert canvas to blob'));
+				}
+			},
+			type,
+			quality
+		);
+	});
+}
+
+/**
+ * Draws a rounded rectangle path (does not fill or stroke)
+ */
+export function roundRect(
+	ctx: CanvasRenderingContext2D,
+	x: number,
+	y: number,
+	width: number,
+	height: number,
+	radius: number
+): void {
+	ctx.beginPath();
+	ctx.moveTo(x + radius, y);
+	ctx.lineTo(x + width - radius, y);
+	ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+	ctx.lineTo(x + width, y + height - radius);
+	ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+	ctx.lineTo(x + radius, y + height);
+	ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+	ctx.lineTo(x, y + radius);
+	ctx.quadraticCurveTo(x, y, x + radius, y);
+	ctx.closePath();
+}
+
+/**
+ * Wraps text to fit within a maximum width
+ */
+export function wrapText(
+	ctx: CanvasRenderingContext2D,
+	text: string,
+	maxWidth: number
+): string[] {
+	const words = text.split(' ');
+	const lines: string[] = [];
+	let currentLine = '';
+
+	for (const word of words) {
+		const testLine = currentLine ? `${currentLine} ${word}` : word;
+		const metrics = ctx.measureText(testLine);
+		if (metrics.width > maxWidth && currentLine) {
+			lines.push(currentLine);
+			currentLine = word;
+		} else {
+			currentLine = testLine;
+		}
+	}
+	if (currentLine) {
+		lines.push(currentLine);
+	}
+	return lines;
+}
+
+/**
+ * Truncates text to fit within a maximum width with ellipsis
+ */
+export function truncateText(
+	ctx: CanvasRenderingContext2D,
+	text: string,
+	maxWidth: number
+): string {
+	if (ctx.measureText(text).width <= maxWidth) {
+		return text;
+	}
+	let truncated = text;
+	while (truncated.length > 0 && ctx.measureText(truncated + '…').width > maxWidth) {
+		truncated = truncated.slice(0, -1);
+	}
+	return truncated + '…';
+}
+
+/**
+ * Computes the trimmed bounding box of an image (removes transparent pixels)
+ */
+export function computeTrimRect(img: HTMLImageElement): {
+	sx: number;
+	sy: number;
+	sw: number;
+	sh: number;
+} {
+	const w = img.naturalWidth || img.width;
+	const h = img.naturalHeight || img.height;
+	const canvas = document.createElement('canvas');
+	canvas.width = w;
+	canvas.height = h;
+	const ctx = canvas.getContext('2d');
+	if (!ctx) return { sx: 0, sy: 0, sw: w, sh: h };
+
+	ctx.drawImage(img, 0, 0);
+	const data = ctx.getImageData(0, 0, w, h).data;
+
+	let minX = w,
+		minY = h,
+		maxX = -1,
+		maxY = -1;
+
+	for (let y = 0; y < h; y++) {
+		for (let x = 0; x < w; x++) {
+			const idx = (y * w + x) * 4 + 3; // alpha channel
+			if (data[idx] > 0) {
+				if (x < minX) minX = x;
+				if (x > maxX) maxX = x;
+				if (y < minY) minY = y;
+				if (y > maxY) maxY = y;
+			}
+		}
+	}
+
+	if (maxX === -1 || maxY === -1) {
+		return { sx: 0, sy: 0, sw: w, sh: h };
+	}
+
+	return { sx: minX, sy: minY, sw: maxX - minX + 1, sh: maxY - minY + 1 };
+}
+
+/**
+ * Renders an emoji to a blob
+ */
+export function renderEmojiToBlob(emoji: string, size = 512): Promise<Blob> {
+	return new Promise((resolve, reject) => {
+		try {
+			const canvas = document.createElement('canvas');
+			canvas.width = size;
+			canvas.height = size;
+			const ctx = canvas.getContext('2d', { alpha: true });
+			if (!ctx) {
+				reject(new Error('Unable to obtain 2D context'));
+				return;
+			}
+			ctx.clearRect(0, 0, size, size);
+			ctx.textAlign = 'center';
+			ctx.textBaseline = 'middle';
+			ctx.font = `${size * 0.8}px "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif`;
+			ctx.fillText(emoji, size / 2, size / 2);
+			canvas.toBlob(
+				(blob) => {
+					if (!blob) {
+						reject(new Error('Failed to render emoji blob'));
+					} else {
+						resolve(blob);
+					}
+				},
+				'image/png'
+			);
+		} catch (err) {
+			reject(err instanceof Error ? err : new Error(String(err)));
+		}
+	});
+}
+
+/**
+ * Normalizes an image buffer to a specific size (useful for icons)
+ */
+export async function normalizeImageBuffer(
+	buffer: ArrayBuffer,
+	size = 512
+): Promise<ArrayBuffer> {
+	const blob = new Blob([buffer]);
+	const image = await loadImageFromBlob(blob);
+	const canvas = document.createElement('canvas');
+	canvas.width = size;
+	canvas.height = size;
+	const ctx = canvas.getContext('2d');
+	if (!ctx) throw new Error('Unable to obtain 2D context');
+
+	ctx.clearRect(0, 0, size, size);
+	const scale = Math.max(size / image.width, size / image.height);
+	const drawWidth = image.width * scale;
+	const drawHeight = image.height * scale;
+	const dx = (size - drawWidth) / 2;
+	const dy = (size - drawHeight) / 2;
+	ctx.drawImage(image, dx, dy, drawWidth, drawHeight);
+
+	const resizedBlob = await canvasToBlob(canvas, 'image/png');
+	return resizedBlob.arrayBuffer();
+}

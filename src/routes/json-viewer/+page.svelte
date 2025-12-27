@@ -295,6 +295,18 @@
 		{#if jsonData && typeof jsonData === 'object' && jsonData !== null}
 			{@const data = jsonData as Record<string, unknown>}
 			<div class="mt-6 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+				{#if 'origins' in data && Array.isArray(data.origins)}
+					<div class="bg-gray-800 rounded-lg p-4 text-center">
+						<div class="text-2xl font-bold text-violet-400">{data.origins.length}</div>
+						<div class="text-sm text-gray-400">Origins</div>
+					</div>
+				{/if}
+				{#if 'classes' in data && Array.isArray(data.classes)}
+					<div class="bg-gray-800 rounded-lg p-4 text-center">
+						<div class="text-2xl font-bold text-indigo-400">{data.classes.length}</div>
+						<div class="text-sm text-gray-400">Classes</div>
+					</div>
+				{/if}
 				{#if 'hex_spirits' in data && Array.isArray(data.hex_spirits)}
 					<div class="bg-gray-800 rounded-lg p-4 text-center">
 						<div class="text-2xl font-bold text-blue-400">{data.hex_spirits.length}</div>
@@ -323,6 +335,12 @@
 					<div class="bg-gray-800 rounded-lg p-4 text-center">
 						<div class="text-2xl font-bold text-green-400">{data.runes.length}</div>
 						<div class="text-sm text-gray-400">Runes</div>
+					</div>
+				{/if}
+				{#if 'custom_dice' in data && Array.isArray(data.custom_dice)}
+					<div class="bg-gray-800 rounded-lg p-4 text-center">
+						<div class="text-2xl font-bold text-orange-400">{data.custom_dice.length}</div>
+						<div class="text-sm text-gray-400">Custom Dice</div>
 					</div>
 				{/if}
 				{#if 'boards' in data && Array.isArray(data.boards)}

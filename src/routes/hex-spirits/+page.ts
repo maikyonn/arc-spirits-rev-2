@@ -1,5 +1,4 @@
-import { redirect } from '@sveltejs/kit';
-
-export const load = ({ url }) => {
-	throw redirect(307, `/hex-spirits/cards${url.search}`);
+// This page is now the main hex spirits data management page
+export const load = () => {
+	return {};
 };

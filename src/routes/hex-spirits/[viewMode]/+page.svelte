@@ -47,7 +47,9 @@ function updateClassQuantity(classId: string, quantity: number) {
 import type { ClassRow, HexSpiritRow, OriginRow, RuneRow } from '$lib/types/gameData';
 	import { EditorModal } from '$lib';
 	import CardActionMenu from '$lib/components/CardActionMenu.svelte';
+	import { ImageUploader } from '$lib/components/shared';
 	import { cropEmptySpace } from '$lib/utils/imageCrop';
+	import { processAndUploadImage } from '$lib/utils/storage';
 	import {
 		deleteHexSpiritRecord,
 		emptyHexSpiritForm,
@@ -76,6 +78,7 @@ function primaryClassId(spirit: HexSpiritRow): string | null {
 type ViewMode = 'cards' | 'grid' | 'prints';
 type HexSpirit = HexSpiritRow & {
 		game_print_image_url: string | null;
+		game_print_no_icons_url: string | null;
 		art_raw_image_url: string | null;
 	};
 	type OriginOption = Pick<OriginRow, 'id' | 'name' | 'position' | 'icon_emoji' | 'icon_png'>;
@@ -751,6 +754,7 @@ async function loadSpirits() {
 			origin_id: primaryOriginId(spirit),
 			class_id: primaryClassId(spirit),
 			game_print_image_url: getPublicImage(spirit.game_print_image_path, spirit.updated_at),
+			game_print_no_icons_url: getPublicImage(spirit.game_print_no_icons, spirit.updated_at),
 			art_raw_image_url: getPublicImage(spirit.art_raw_image_path, spirit.updated_at)
 		}));
 	} catch (err) {
@@ -893,22 +897,23 @@ async function deleteSpirit(spirit: HexSpirit) {
 				await gameAssetsStorage.remove([normalizeHexSpiritPath(existingPath)]);
 			}
 
-			// Crop empty space from the image
-			const croppedBlob = await cropEmptySpace(file);
-			
-			const extension = file.name.split('.').pop()?.toLowerCase() ?? 'png';
+			// Use unified upload with transparent area cropping
 			const sanitizedName = sanitizeFileName(spirit.name);
 			const variantFolder = variant === 'game_print' ? 'game_print' : 'art_raw';
-			const fileName = `hex_${sanitizedName}_${variant}.${extension}`;
-			const fullPath = `hex_spirits/${spirit.id}/${variantFolder}/${fileName}`;
-			const { error: uploadError } = await gameAssetsStorage.upload(fullPath, croppedBlob, {
-				cacheControl: '3600',
-				upsert: true,
-				contentType: file.type
+			const fileName = `hex_${sanitizedName}_${variant}`;
+			const folder = `hex_spirits/${spirit.id}/${variantFolder}`;
+
+			const { data, error: uploadError } = await processAndUploadImage(file, {
+				folder,
+				filename: fileName,
+				cropTransparent: true,
+				upsert: true
 			});
 			if (uploadError) {
 				throw uploadError;
 			}
+
+			const fullPath = data?.path ?? '';
 
 			const updateData: {
 				game_print_image_path?: string | null;
@@ -1740,22 +1745,36 @@ async function deleteSpirit(spirit: HexSpirit) {
 				{/each}
 			</div>
 		</div>
-			<label class="span-full">
-				Game print storage path (optional)
-				<input
-					type="text"
+			{#if editingSpirit}
+			<div class="span-full image-upload-section">
+				<label class="upload-label">Game Print Image</label>
+				<ImageUploader
 					bind:value={formData.game_print_image_path}
-					placeholder="hex_spirits/.../game_print.png"
+					folder={`hex_spirits/${editingSpirit.id}/game_print`}
+					maxSizeMB={50}
+					aspectRatio="1 / 1"
+					onupload={(path) => {
+						formData.game_print_image_path = path;
+					}}
+					onerror={(err) => alert(`Upload failed: ${err}`)}
 				/>
-			</label>
-		<label class="span-full">
-			Art (raw) storage path (optional)
-			<input
-				type="text"
-				bind:value={formData.art_raw_image_path}
-				placeholder="hex_spirits/.../art_raw.png"
-			/>
-		</label>
+			</div>
+			<div class="span-full image-upload-section">
+				<label class="upload-label">Art Raw Image</label>
+				<ImageUploader
+					bind:value={formData.art_raw_image_path}
+					folder={`hex_spirits/${editingSpirit.id}/art_raw`}
+					maxSizeMB={50}
+					aspectRatio="1 / 1"
+					onupload={(path) => {
+						formData.art_raw_image_path = path;
+					}}
+					onerror={(err) => alert(`Upload failed: ${err}`)}
+				/>
+			</div>
+		{:else}
+			<p class="span-full upload-note">Save the spirit first to enable image uploads.</p>
+		{/if}
 		<label class="span-full">
 			PSD folder override (optional)
 			<input
@@ -1817,6 +1836,30 @@ async function deleteSpirit(spirit: HexSpirit) {
 
 	.spirit-form .span-full {
 		grid-column: 1 / -1;
+	}
+
+	.spirit-form .image-upload-section {
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
+	}
+
+	.spirit-form .upload-label {
+		font-size: 0.85rem;
+		font-weight: 500;
+		color: #cbd5e1;
+	}
+
+	.spirit-form .upload-note {
+		font-size: 0.8rem;
+		color: #94a3b8;
+		font-style: italic;
+		padding: 0.75rem;
+		background: rgba(30, 41, 59, 0.5);
+		border-radius: 6px;
+		border: 1px dashed rgba(148, 163, 184, 0.3);
+		text-align: center;
+		margin: 0;
 	}
 
 	.spirit-card {

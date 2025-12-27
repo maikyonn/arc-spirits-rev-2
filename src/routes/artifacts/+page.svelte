@@ -6,110 +6,149 @@
 		OriginRow,
 		RuneRow,
 		GuardianRow,
-		ArtifactTagRow
+		ArtifactTagRow,
+		ArtifactTemplateRow
 	} from '$lib/types/gameData';
-	import ArtifactFilterSidebar from '$lib/components/artifacts/ArtifactFilterSidebar.svelte';
-	import ArtifactGrid from '$lib/components/artifacts/ArtifactGrid.svelte';
+	import { artifactService, type ArtifactTemplateConfig, type GeneratedArtifactPreview } from '$lib/services/artifactService';
+	import { generateArtifactCardPNG } from '$lib/generators/cards';
 	import ArtifactEditorDrawer from '$lib/components/artifacts/ArtifactEditorDrawer.svelte';
 	import TagManager from '$lib/components/artifacts/TagManager.svelte';
 	import ArtifactCardGallery from '$lib/components/artifacts/ArtifactCardGallery.svelte';
-	import { generateArtifactCardPNG } from '$lib/utils/artifactCardGenerator';
+	import { ArtifactsListView, ArtifactsTableView, ArtifactsGridView } from '$lib/components/artifacts';
+	import { PageLayout, type Tab } from '$lib/components/layout';
+	import { Button } from '$lib/components/ui';
+	import { ConfirmDialog, FilterBar } from '$lib/components/shared';
+	import { getErrorMessage } from '$lib/utils';
+	import { processAndUploadImage } from '$lib/utils/storage';
+	import { useLookup } from '$lib/composables';
 
 	// Data
-	let artifacts: ArtifactRow[] = [];
-	let origins: OriginRow[] = [];
-	let runes: RuneRow[] = [];
-	let guardians: Pick<GuardianRow, 'id' | 'name'>[] = [];
-	let tags: ArtifactTagRow[] = [];
+	let artifacts = $state<ArtifactRow[]>([]);
+	let origins = $state<OriginRow[]>([]);
+	let runes = $state<RuneRow[]>([]);
+	let guardians = $state<Pick<GuardianRow, 'id' | 'name'>[]>([]);
+	let tags = $state<ArtifactTagRow[]>([]);
+	let templates = $state<ArtifactTemplateRow[]>([]);
+
+	// Lookups for efficient ID → name mapping
+	const tagLookup = useLookup(() => tags);
+	const guardianLookup = useLookup(() => guardians);
+	const runeLookup = useLookup(() => runes);
+
+	// Tab state
+	const tabs: Tab[] = [
+		{ id: 'list', label: 'Data: List', icon: '📋' },
+		{ id: 'table', label: 'Data: Table', icon: '📊' },
+		{ id: 'generator', label: 'Generator', icon: '⚙️' },
+		{ id: 'gallery', label: 'Card Gallery', icon: '🖼️' }
+	];
+	let activeTab = $state('list');
 
 	// UI State
-	let isEditorOpen = false;
-	let isTagManagerOpen = false;
-	let isGalleryOpen = false;
-	let editingArtifact: Partial<ArtifactRow> = {};
-	let loading = true;
-	let generatingAllCards = false;
-	let generationProgress = { current: 0, total: 0 };
+	let isEditorOpen = $state(false);
+	let isTagManagerOpen = $state(false);
+	let isGalleryOpen = $state(false);
+	let editingArtifact = $state<Partial<ArtifactRow>>({});
+	let loading = $state(true);
+
+	// Confirm dialog state
+	let confirmOpen = $state(false);
+	let confirmMessage = $state('');
+	let confirmAction = $state<(() => void) | null>(null);
 
 	// Filters
-let search = '';
-let tagFilter: string[] = [];
-let sortBy: 'name' | 'created' = 'name';
-let groupByTags = true;
+	let search = $state('');
+	let tagFilter = $state<string[]>([]);
 
-// Filtered Artifacts
-$: filteredArtifacts = artifacts
-		.filter((artifact) => {
-			// Search
-			if (search) {
-				const q = search.toLowerCase();
-				const matchesName = artifact.name?.toLowerCase().includes(q);
-				const matchesBenefit = artifact.benefit?.toLowerCase().includes(q);
-				if (!matchesName && !matchesBenefit) {
-					return false;
+	// Generator state
+	let currentTemplateId = $state<string | null>(null);
+	let templateName = $state('New Template');
+	let isActive = $state(false);
+	let config = $state<ArtifactTemplateConfig>({
+		namePattern: '{origin} Memory',
+		benefit: 'Gain {quantity} {origin} runes',
+		recipeType: 'origin-runes',
+		originRuneQuantity: 2,
+		specificRunes: [],
+		tagIds: [],
+		selectedOriginIds: [],
+		quantity: 1
+	});
+	let previewArtifacts = $state<GeneratedArtifactPreview[]>([]);
+	let saving = $state(false);
+
+	// Gallery state
+	let generatingCards = $state(false);
+	let generationProgress = $state({ current: 0, total: 0 });
+	let selectedArtifacts = $state<Set<string>>(new Set());
+
+	// Filtered Artifacts - sorted by guardian, then by name
+	const filteredArtifacts = $derived(
+		artifacts
+			.filter((artifact) => {
+				// Search
+				if (search) {
+					const q = search.toLowerCase();
+					const matchesName = artifact.name?.toLowerCase().includes(q);
+					const matchesBenefit = artifact.benefit?.toLowerCase().includes(q);
+					if (!matchesName && !matchesBenefit) {
+						return false;
+					}
 				}
-			}
 
-			// Tag Filter
-			if (tagFilter.length > 0) {
-				const tagSet = new Set(artifact.tag_ids ?? []);
-				if (!tagFilter.every((t) => tagSet.has(t))) return false;
-			}
+				// Tag Filter
+				if (tagFilter.length > 0) {
+					const tagSet = new Set(artifact.tag_ids ?? []);
+					if (!tagFilter.every((t) => tagSet.has(t))) return false;
+				}
 
-			return true;
-		})
-		.sort((a, b) => {
-			if (sortBy === 'name') return (a.name || '').localeCompare(b.name || '');
-			if (sortBy === 'created')
-				return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
-			return 0;
-		});
+				return true;
+			})
+			.sort((a, b) => {
+				// Sort by guardian first (no guardian goes to end)
+				const guardianA = a.guardian_id ? guardianLookup.getLabel(a.guardian_id, '') : '';
+				const guardianB = b.guardian_id ? guardianLookup.getLabel(b.guardian_id, '') : '';
 
-	// Group artifacts by tags
-	$: groupedByTags = (() => {
-		if (!groupByTags) return null;
-		
-		const groups = new Map<string, typeof filteredArtifacts>();
-		const noTagsGroup: typeof filteredArtifacts = [];
+				// If one has guardian and other doesn't, guardian comes first
+				if (guardianA && !guardianB) return -1;
+				if (!guardianA && guardianB) return 1;
 
-		filteredArtifacts.forEach((artifact) => {
-			if (!artifact.tag_ids || artifact.tag_ids.length === 0) {
-				noTagsGroup.push(artifact);
-			} else {
-				artifact.tag_ids.forEach((tagId) => {
-					const tagName = tags.find((t) => t.id === tagId)?.name ?? 'Tag';
-					if (!groups.has(tagName)) groups.set(tagName, []);
-					groups.get(tagName)!.push(artifact);
-				});
-			}
-		});
+				// If both have guardians, sort by guardian name
+				if (guardianA !== guardianB) {
+					return guardianA.localeCompare(guardianB);
+				}
 
-		const result: Array<{ tag: string; artifacts: typeof filteredArtifacts }> = [];
-		if (noTagsGroup.length > 0) result.push({ tag: 'No Tags', artifacts: noTagsGroup });
+				// Within same guardian (or both no guardian), sort by artifact name
+				return (a.name || '').localeCompare(b.name || '');
+			})
+	);
 
-		Array.from(groups.entries())
-			.sort(([a], [b]) => a.localeCompare(b))
-			.forEach(([tag, artifacts]) => {
-				const uniqueArtifacts = Array.from(new Map(artifacts.map((a) => [a.id, a])).values());
-				result.push({ tag, artifacts: uniqueArtifacts });
-			});
-
-		return result;
-	})();
+	// Generation status
+	const generationStatus = $derived({
+		total: artifacts.length,
+		withCards: artifacts.filter((a) => a.card_image_path).length,
+		selected: selectedArtifacts.size
+	});
 
 
 	onMount(async () => {
 		await loadData();
+		// Initialize selected origin IDs after loading
+		if (!config.selectedOriginIds || config.selectedOriginIds.length === 0) {
+			config.selectedOriginIds = origins.map(o => o.id);
+		}
+		updatePreview();
 	});
 
 	async function loadData() {
 		loading = true;
-		const [aRes, oRes, rRes, avRes, tRes] = await Promise.all([
+		const [aRes, oRes, rRes, avRes, tRes, tmpRes] = await Promise.all([
 			supabase.from('artifacts').select('*'),
-			supabase.from('origins').select('*').order('name'),
+			supabase.from('origins').select('*').order('position', { ascending: true }),
 			supabase.from('runes').select('*'),
 			supabase.from('guardians').select('id, name').order('name'),
-			supabase.from('artifact_tags').select('*').order('name')
+			supabase.from('artifact_tags').select('*').order('name'),
+			supabase.from('artifact_templates').select('*').order('name')
 		]);
 
 		if (aRes.data) artifacts = aRes.data;
@@ -117,6 +156,7 @@ $: filteredArtifacts = artifacts
 		if (rRes.data) runes = rRes.data;
 		if (avRes.data) guardians = avRes.data;
 		if (tRes.data) tags = tRes.data;
+		if (tmpRes.data) templates = tmpRes.data;
 		loading = false;
 	}
 
@@ -140,100 +180,377 @@ $: filteredArtifacts = artifacts
 		isEditorOpen = true;
 	}
 
-	async function handleDelete(artifact: ArtifactRow) {
-		if (!confirm(`Delete "${artifact.name}"?`)) return;
-
-		const { error } = await supabase.from('artifacts').delete().eq('id', artifact.id);
-		if (error) {
-			console.error('Error deleting artifact:', error);
-			alert('Failed to delete artifact');
-		} else {
-			artifacts = artifacts.filter((a) => a.id !== artifact.id);
-		}
+	function handleDelete(artifact: ArtifactRow) {
+		confirmMessage = `Delete "${artifact.name}"?`;
+		confirmAction = async () => {
+			try {
+				const { error } = await supabase.from('artifacts').delete().eq('id', artifact.id);
+				if (error) throw error;
+				artifacts = artifacts.filter((a) => a.id !== artifact.id);
+			} catch (err) {
+				console.error('Error deleting artifact:', err);
+				alert(`Failed to delete artifact: ${getErrorMessage(err)}`);
+			}
+		};
+		confirmOpen = true;
 	}
 
 	async function handleSave(event: CustomEvent<Partial<ArtifactRow>>) {
 		const toSave = event.detail;
-		// Validation?
 		if (!toSave.name) return alert('Name is required');
 
 		const payload = {
 			name: toSave.name,
 			benefit: toSave.benefit,
-		guardian_id: toSave.guardian_id,
-		tag_ids: toSave.tag_ids ?? [],
+			guardian_id: toSave.guardian_id,
+			tag_ids: toSave.tag_ids ?? [],
 			recipe_box: toSave.recipe_box,
 			quantity: toSave.quantity ?? 1
 		};
 
-		if (toSave.id) {
-			// Update
-			const { error } = await supabase
-				.from('artifacts')
-				.update(payload)
-				.eq('id', toSave.id);
-
-			if (error) {
-				console.error('Error updating:', error);
-				alert('Failed to update artifact');
+		try {
+			if (toSave.id) {
+				// Update
+				const { error } = await supabase.from('artifacts').update(payload).eq('id', toSave.id);
+				if (error) throw error;
 			} else {
-				await loadData(); // Reload to get fresh state
-				isEditorOpen = false;
+				// Create
+				const { error } = await supabase.from('artifacts').insert([payload]);
+				if (error) throw error;
 			}
-		} else {
-			// Create
-			const { error } = await supabase.from('artifacts').insert([payload]);
-
-			if (error) {
-				console.error('Error creating:', error);
-				alert('Failed to create artifact');
-			} else {
-				await loadData();
-				isEditorOpen = false;
-			}
+			await loadData();
+			isEditorOpen = false;
+		} catch (err) {
+			console.error('Error saving artifact:', err);
+			alert(`Failed to ${toSave.id ? 'update' : 'create'} artifact: ${getErrorMessage(err)}`);
 		}
 	}
 
 	async function handleSaveTag(event: CustomEvent<Partial<ArtifactTagRow>>) {
 		const tag = event.detail;
-		if (tag.id) {
-			const { error } = await supabase
-				.from('artifact_tags')
-				.update({ name: tag.name, color: tag.color })
-				.eq('id', tag.id);
-			if (error) alert('Failed to update tag');
-		} else {
-			const { error } = await supabase
-				.from('artifact_tags')
-				.insert({ name: tag.name, color: tag.color });
-			if (error) alert('Failed to create tag');
+		try {
+			if (tag.id) {
+				const { error } = await supabase
+					.from('artifact_tags')
+					.update({ name: tag.name, color: tag.color })
+					.eq('id', tag.id);
+				if (error) throw error;
+			} else {
+				const { error } = await supabase
+					.from('artifact_tags')
+					.insert({ name: tag.name, color: tag.color });
+				if (error) throw error;
+			}
+			await loadData();
+		} catch (err) {
+			console.error('Error saving tag:', err);
+			alert(`Failed to ${tag.id ? 'update' : 'create'} tag: ${getErrorMessage(err)}`);
 		}
-		await loadData();
 	}
 
 	async function handleDeleteTag(event: CustomEvent<ArtifactTagRow>) {
 		const tag = event.detail;
-		if (!confirm(`Delete tag "${tag.name}"?`)) return;
-		const { error } = await supabase.from('artifact_tags').delete().eq('id', tag.id);
-		if (error) alert('Failed to delete tag');
-		await loadData();
+		confirmMessage = `Delete tag "${tag.name}"?`;
+		confirmAction = async () => {
+			try {
+				const { error } = await supabase.from('artifact_tags').delete().eq('id', tag.id);
+				if (error) throw error;
+				await loadData();
+			} catch (err) {
+				console.error('Error deleting tag:', err);
+				alert(`Failed to delete tag: ${getErrorMessage(err)}`);
+			}
+		};
+		confirmOpen = true;
 	}
 
-	// Generate PNG cards for all artifacts
+	function handleTabChange(tabId: string) {
+		activeTab = tabId;
+	}
+
+	// ========== Generator Functions ==========
+
+	function updatePreview() {
+		previewArtifacts = artifactService.generateFromTemplate(config, origins, runes);
+	}
+
+	function toggleOrigin(originId: string) {
+		const currentIds = config.selectedOriginIds || [];
+		const index = currentIds.indexOf(originId);
+		if (index > -1) {
+			config.selectedOriginIds = currentIds.filter((id) => id !== originId);
+		} else {
+			config.selectedOriginIds = [...currentIds, originId];
+		}
+		updatePreview();
+	}
+
+	function toggleAllOrigins() {
+		const currentIds = config.selectedOriginIds || [];
+		config.selectedOriginIds = currentIds.length === origins.length ? [] : origins.map((o) => o.id);
+		updatePreview();
+	}
+
+	function toggleTag(tagId: string) {
+		const index = config.tagIds.indexOf(tagId);
+		if (index > -1) {
+			config.tagIds = config.tagIds.filter((t) => t !== tagId);
+		} else {
+			config.tagIds = [...config.tagIds, tagId];
+		}
+		updatePreview();
+	}
+
+	function addSpecificRune() {
+		if (runes.length === 0) {
+			alert('No runes available.');
+			return;
+		}
+		config.specificRunes = [...config.specificRunes, { rune_id: runes[0].id, quantity: 1 }];
+		updatePreview();
+	}
+
+	function updateSpecificRune(index: number, runeId: string) {
+		config.specificRunes = config.specificRunes.map((e, i) => (i === index ? { ...e, rune_id: runeId } : e));
+		updatePreview();
+	}
+
+	function updateSpecificRuneQuantity(index: number, quantity: number) {
+		config.specificRunes = config.specificRunes.map((e, i) => (i === index ? { ...e, quantity: Math.max(1, quantity) } : e));
+		updatePreview();
+	}
+
+	function removeSpecificRune(index: number) {
+		config.specificRunes = config.specificRunes.filter((_, i) => i !== index);
+		updatePreview();
+	}
+
+	async function syncTemplateArtifacts(templateId: string, artifactsToCreate: typeof previewArtifacts) {
+		const { error: deleteError } = await supabase
+			.from('artifacts')
+			.delete()
+			.eq('template_id', templateId);
+
+		if (deleteError) throw deleteError;
+
+		if (artifactsToCreate.length > 0) {
+			const payload = artifactsToCreate.map(a => ({
+				name: a.name,
+				benefit: a.benefit,
+				guardian_id: null,
+				recipe_box: a.recipe_box,
+				tag_ids: a.tag_ids ?? [],
+				template_id: templateId,
+				quantity: config.quantity ?? 1
+			}));
+
+			const { error: insertError } = await supabase
+				.from('artifacts')
+				.insert(payload);
+
+			if (insertError) throw insertError;
+		}
+	}
+
+	async function toggleTemplateActive(template: ArtifactTemplateRow, event: Event) {
+		event.stopPropagation();
+		const newStatus = !template.is_active;
+
+		try {
+			if (currentTemplateId !== template.id) {
+				await loadTemplate(template);
+			}
+
+			isActive = newStatus;
+
+			const payload = {
+				name: templateName,
+				config: config as any,
+				is_active: newStatus,
+				updated_at: new Date().toISOString()
+			};
+
+			const { error } = await supabase
+				.from('artifact_templates')
+				.update(payload)
+				.eq('id', template.id);
+			if (error) throw error;
+
+			if (newStatus) {
+				await syncTemplateArtifacts(template.id, previewArtifacts);
+			} else {
+				await syncTemplateArtifacts(template.id, []);
+			}
+
+			await loadData();
+		} catch (err) {
+			console.error('Error toggling template:', err);
+			alert('Failed to toggle template.');
+		}
+	}
+
+	async function loadTemplate(template: ArtifactTemplateRow) {
+		currentTemplateId = template.id;
+		templateName = template.name;
+		isActive = template.is_active ?? false;
+
+		const loadedConfig = template.config as any;
+		config = {
+			namePattern: loadedConfig.namePattern ?? '{origin} Memory',
+			benefit: loadedConfig.benefit ?? 'Gain {quantity} {origin} runes',
+			recipeType: loadedConfig.recipeType ?? 'origin-runes',
+			originRuneQuantity: loadedConfig.originRuneQuantity ?? 2,
+			specificRunes: Array.isArray(loadedConfig.specificRunes) ? loadedConfig.specificRunes : [],
+			tagIds: Array.isArray(loadedConfig.tagIds) ? loadedConfig.tagIds : [],
+			selectedOriginIds: Array.isArray(loadedConfig.selectedOriginIds) ? loadedConfig.selectedOriginIds : origins.map(o => o.id),
+			quantity: loadedConfig.quantity ?? 1
+		};
+
+		updatePreview();
+	}
+
+	async function deleteTemplate(id: string, event: Event) {
+		event.stopPropagation();
+		if (!confirm('Delete this template? This will also delete all artifacts generated by it.')) return;
+		try {
+			await syncTemplateArtifacts(id, []);
+
+			const { error } = await supabase
+				.from('artifact_templates')
+				.delete()
+				.eq('id', id);
+			if (error) throw error;
+
+			if (currentTemplateId === id) {
+				createNewTemplate();
+			}
+			await loadData();
+		} catch (err) {
+			console.error('Error deleting template:', err);
+			alert('Failed to delete template.');
+		}
+	}
+
+	function createNewTemplate() {
+		currentTemplateId = null;
+		templateName = 'New Template';
+		isActive = false;
+		config = {
+			namePattern: '{origin} Memory',
+			benefit: 'Gain {quantity} {origin} runes',
+			recipeType: 'origin-runes',
+			originRuneQuantity: 2,
+			specificRunes: [],
+			tagIds: [],
+			selectedOriginIds: origins.map(o => o.id),
+			quantity: 1
+		};
+		updatePreview();
+	}
+
+	async function saveTemplateWithIds() {
+		const name = prompt('Enter template name:', templateName);
+		if (!name) return;
+
+		saving = true;
+		try {
+			const payload = {
+				name,
+				config: config as any,
+				is_active: isActive,
+				updated_at: new Date().toISOString()
+			};
+
+			let savedId = currentTemplateId;
+
+			if (currentTemplateId) {
+				const { error } = await supabase
+					.from('artifact_templates')
+					.update(payload)
+					.eq('id', currentTemplateId);
+				if (error) throw error;
+			} else {
+				const { data, error } = await supabase
+					.from('artifact_templates')
+					.insert(payload)
+					.select()
+					.single();
+				if (error) throw error;
+				if (data) savedId = data.id;
+			}
+
+			currentTemplateId = savedId;
+			templateName = name;
+
+			if (savedId) {
+				if (isActive) {
+					await syncTemplateArtifacts(savedId, previewArtifacts);
+				} else {
+					await syncTemplateArtifacts(savedId, []);
+				}
+			}
+
+			await loadData();
+		} catch (err) {
+			console.error('Error saving template:', err);
+			alert('Failed to save template.');
+		} finally {
+			saving = false;
+		}
+	}
+
+	// ========== Gallery Functions ==========
+
+	function toggleSelection(artifactId: string) {
+		const newSet = new Set(selectedArtifacts);
+		if (newSet.has(artifactId)) {
+			newSet.delete(artifactId);
+		} else {
+			newSet.add(artifactId);
+		}
+		selectedArtifacts = newSet;
+	}
+
+	function selectAll() {
+		selectedArtifacts = new Set(filteredArtifacts.map((a) => a.id));
+	}
+
+	function deselectAll() {
+		selectedArtifacts = new Set();
+	}
+
+	async function generateSelectedCards() {
+		const selected = artifacts.filter((a) => selectedArtifacts.has(a.id));
+		if (selected.length === 0) {
+			alert('Please select at least one artifact');
+			return;
+		}
+
+		if (!confirm(`Generate card images for ${selected.length} selected artifact${selected.length !== 1 ? 's' : ''}? This may take a while.`)) {
+			return;
+		}
+
+		await generateCards(selected);
+	}
+
 	async function generateAllCards() {
 		if (!confirm(`Generate card images for all ${artifacts.length} artifacts? This may take a while.`)) {
 			return;
 		}
 
-		generatingAllCards = true;
-		generationProgress = { current: 0, total: artifacts.length };
+		await generateCards(artifacts);
+	}
+
+	async function generateCards(artifactList: ArtifactRow[]) {
+		generatingCards = true;
+		generationProgress = { current: 0, total: artifactList.length };
 
 		const errors: string[] = [];
 		const successes: string[] = [];
 
-		for (let i = 0; i < artifacts.length; i++) {
-			const artifact = artifacts[i];
-			generationProgress.current = i + 1;
+		for (let i = 0; i < artifactList.length; i++) {
+			const artifact = artifactList[i];
+			generationProgress = { current: i + 1, total: artifactList.length };
 
 			if (!artifact.id || !artifact.name) {
 				errors.push(`${artifact.name || 'Unknown'}: Missing ID or name`);
@@ -241,32 +558,30 @@ $: filteredArtifacts = artifacts
 			}
 
 			try {
-			// Generate PNG directly using Canvas API
-			const pngBlob = await generateArtifactCardPNG(artifact, origins, runes, tags, guardians);
+				const pngBlob = await generateArtifactCardPNG(artifact, origins, runes, tags, guardians);
 
-				// Convert blob to File
-				const fileName = `artifacts/${artifact.id}/card.png`;
-				const file = new File([pngBlob], 'card.png', { type: 'image/png' });
+				const fileName = 'card';
+				const folder = `artifacts/${artifact.id}`;
 
-				// Upload to Supabase storage
-				const { error: uploadError } = await supabase.storage
-					.from('game_assets')
-					.upload(fileName, file, {
-						contentType: 'image/png',
-						upsert: true,
-					});
+				const { data, error: uploadError } = await processAndUploadImage(pngBlob, {
+					folder,
+					filename: fileName,
+					cropTransparent: true,
+					upsert: true
+				});
 
 				if (uploadError) {
 					errors.push(`${artifact.name}: ${uploadError.message}`);
 					continue;
 				}
 
-				// Update artifact with card_image_path
+				const uploadedPath = data?.path ?? '';
+
 				const { error: updateError } = await supabase
 					.from('artifacts')
 					.update({
-						card_image_path: fileName,
-						updated_at: new Date().toISOString(),
+						card_image_path: uploadedPath,
+						updated_at: new Date().toISOString()
 					})
 					.eq('id', artifact.id);
 
@@ -279,86 +594,388 @@ $: filteredArtifacts = artifacts
 				errors.push(`${artifact.name}: ${error instanceof Error ? error.message : 'Unknown error'}`);
 			}
 
-			// Small delay to prevent browser from freezing
 			await new Promise((resolve) => setTimeout(resolve, 50));
 		}
 
-		generatingAllCards = false;
+		generatingCards = false;
 		generationProgress = { current: 0, total: 0 };
 
-		// Reload data to get updated card_image_path values
 		await loadData();
 
-		// Show results
 		const message = `Generated ${successes.length} card images successfully.\n${errors.length > 0 ? `\n${errors.length} errors:\n${errors.slice(0, 10).join('\n')}${errors.length > 10 ? `\n... and ${errors.length - 10} more` : ''}` : ''}`;
 		alert(message);
+
+		selectedArtifacts = new Set();
 	}
 </script>
 
-<div class="artifacts-dashboard">
-	<aside class="sidebar-area">
-		<div class="sidebar-header">
-			<h2>Artifacts</h2>
-			<div class="header-actions">
-				<button class="btn-secondary" on:click={() => (isGalleryOpen = true)}>
-					View Gallery ({artifacts.filter((a) => a.card_image_path).length})
-				</button>
-				<button class="btn-secondary" on:click={generateAllCards} disabled={generatingAllCards || artifacts.length === 0}>
-					{generatingAllCards ? `Generating... (${generationProgress.current}/${generationProgress.total})` : 'Generate All Cards'}
-				</button>
-				<button class="btn-primary" on:click={openCreate}>+ New</button>
+<PageLayout
+	title="Artifacts"
+	subtitle="Manage artifact definitions, recipes, guardians, and tags"
+	{tabs}
+	{activeTab}
+	onTabChange={handleTabChange}
+>
+	{#snippet headerActions()}
+		<Button variant="primary" onclick={openCreate}>Create Artifact</Button>
+		<Button onclick={() => (isTagManagerOpen = true)}>Manage Tags</Button>
+	{/snippet}
+
+	{#snippet tabActions()}
+		<span class="artifact-count">{filteredArtifacts.length} artifacts</span>
+	{/snippet}
+
+	<FilterBar
+		bind:searchValue={search}
+		searchPlaceholder="Search artifacts"
+		filters={[
+			{
+				key: 'tags',
+				label: 'Tags',
+				options: tags.map((t) => ({ label: t.name, value: t.id })),
+				value: tagFilter[0] ?? 'all'
+			}
+		]}
+		onfilterchange={(key, value) => {
+			if (key === 'tags') {
+				tagFilter = Array.isArray(value) ? value.map(String) : value ? [String(value)] : [];
+			}
+		}}
+	/>
+
+	{#if loading}
+		<div class="loading-state">Loading artifacts...</div>
+	{:else if activeTab === 'list'}
+		<ArtifactsListView
+			artifacts={filteredArtifacts}
+			{tagLookup}
+			{guardianLookup}
+			{runeLookup}
+			onEdit={(artifact) => openEdit(artifact)}
+			onDelete={(artifact) => handleDelete(artifact)}
+		/>
+	{:else if activeTab === 'table'}
+		<ArtifactsTableView
+			artifacts={filteredArtifacts}
+			{tagLookup}
+			{guardianLookup}
+			{runeLookup}
+			onEdit={(artifact) => openEdit(artifact)}
+		/>
+	{:else if activeTab === 'generator'}
+		<div class="generator-layout">
+			<!-- Sidebar: Saved Templates -->
+			<aside class="sidebar-panel">
+				<div class="sidebar-header">
+					<h3>Templates</h3>
+					<Button variant="primary" size="sm" onclick={createNewTemplate}>New</Button>
+				</div>
+				{#if templates.length === 0}
+					<p class="muted-text">No templates saved.</p>
+				{:else}
+					<div class="template-list">
+						{#each templates as t}
+							<div class="template-item" class:active={currentTemplateId === t.id}>
+								<button class="template-btn" onclick={() => loadTemplate(t)}>
+									<span class="status-dot" class:on={t.is_active}></span>
+									{t.name}
+								</button>
+								<button
+									class="icon-btn"
+									title={t.is_active ? 'Deactivate' : 'Activate'}
+									onclick={(e) => toggleTemplateActive(t, e)}
+								>
+									{t.is_active ? '⏸️' : '▶️'}
+								</button>
+								<button class="delete-btn" onclick={(e) => deleteTemplate(t.id, e)} title="Delete">×</button>
+							</div>
+						{/each}
+					</div>
+				{/if}
+			</aside>
+
+			<!-- Main Panel -->
+			<div class="main-panel">
+				<!-- Config Section -->
+				<div class="config-panel">
+					<div class="panel-header">
+						<h2>{templateName}</h2>
+						<div class="header-actions">
+							<label class="active-toggle">
+								<input type="checkbox" bind:checked={isActive} />
+								<span>Active (Syncs to DB)</span>
+							</label>
+							<Button variant="primary" onclick={saveTemplateWithIds} disabled={saving}>
+								{saving ? 'Saving...' : 'Save & Sync'}
+							</Button>
+						</div>
+					</div>
+
+					<div class="config-grid">
+						<!-- Left Column -->
+						<div class="config-col">
+							<label>
+								Name Pattern
+								<input
+									type="text"
+									bind:value={config.namePattern}
+									placeholder="&#123;origin&#125; Memory"
+									oninput={updatePreview}
+								/>
+							</label>
+
+							<label>
+								Benefit
+								<textarea
+									rows="2"
+									bind:value={config.benefit}
+									placeholder="Gain &#123;quantity&#125; &#123;origin&#125; runes"
+									oninput={updatePreview}
+								></textarea>
+							</label>
+						</div>
+
+						<!-- Right Column -->
+						<div class="config-col">
+							<label>
+								Recipe Type
+								<select bind:value={config.recipeType} onchange={updatePreview}>
+									<option value="origin-runes">Origin Runes</option>
+									<option value="specific-runes">Specific Runes</option>
+									<option value="custom">Custom (None)</option>
+								</select>
+							</label>
+
+							{#if config.recipeType === 'origin-runes'}
+								<label>
+									Rune Quantity
+									<input
+										type="number"
+										min="1"
+										bind:value={config.originRuneQuantity}
+										oninput={updatePreview}
+									/>
+								</label>
+							{:else if config.recipeType === 'specific-runes'}
+								<div class="mini-recipe-editor">
+									<div class="mini-header">
+										<small>Runes</small>
+										<button class="btn-tiny" onclick={addSpecificRune}>+</button>
+									</div>
+									{#each config.specificRunes as entry, index (index)}
+										<div class="mini-row">
+											<select
+												value={entry.rune_id}
+												onchange={(e) => updateSpecificRune(index, e.currentTarget.value)}
+											>
+												{#each runes as rune}
+													<option value={rune.id}>{rune.name}</option>
+												{/each}
+											</select>
+											<input
+												type="number"
+												min="1"
+												value={entry.quantity}
+												oninput={(e) => updateSpecificRuneQuantity(index, Number(e.currentTarget.value))}
+											/>
+											<button class="delete-btn" onclick={() => removeSpecificRune(index)}>×</button>
+										</div>
+									{/each}
+								</div>
+							{/if}
+
+							<label>
+								Tags
+								<div class="compact-tags">
+									{#each tags as tag}
+										<button
+											class="compact-tag"
+											class:active={config.tagIds.includes(tag.id)}
+											style="--tag-color: {tag.color}"
+											onclick={() => toggleTag(tag.id)}
+										>
+											{tag.name}
+										</button>
+									{/each}
+								</div>
+							</label>
+						</div>
+					</div>
+
+					<!-- Origin Selector -->
+					<div class="origin-bar">
+						<div class="origin-bar-header">
+							<small>Origins ({config.selectedOriginIds?.length ?? 0})</small>
+							<button class="btn-tiny" onclick={toggleAllOrigins}>
+								{config.selectedOriginIds?.length === origins.length ? 'None' : 'All'}
+							</button>
+						</div>
+						<div class="origin-chips">
+							{#each origins as origin}
+								<button
+									class="origin-chip"
+									class:active={config.selectedOriginIds?.includes(origin.id)}
+									onclick={() => toggleOrigin(origin.id)}
+								>
+									{origin.name}
+								</button>
+							{/each}
+						</div>
+					</div>
+				</div>
+
+				<!-- Preview Section -->
+				<div class="preview-panel">
+					<div class="preview-header">
+						<h2>Generated Artifacts ({previewArtifacts.length})</h2>
+						{#if isActive}
+							<span class="status-badge live">● Live Syncing</span>
+						{:else}
+							<span class="status-badge draft">○ Draft</span>
+						{/if}
+					</div>
+
+					<div class="preview-grid">
+						{#each previewArtifacts as artifact}
+							<article class="card artifact-preview">
+								<div class="preview-top">
+									<h3>{artifact.name}</h3>
+								</div>
+								<p class="benefit">{artifact.benefit}</p>
+								<div class="preview-meta">
+									{#if artifact.recipe_box.length > 0}
+										<div class="mini-recipe">
+											{#each artifact.recipe_box as entry}
+												{@const rune = runes.find((r) => r.id === entry.rune_id)}
+												<span title="{rune?.name}">{entry.quantity}x {rune?.name?.substring(0, 2) ?? '?'}</span>
+											{/each}
+										</div>
+									{/if}
+									<div class="mini-tags">
+										{#each artifact.tag_ids as tagId}
+											{@const tag = tags.find((t) => t.id === tagId)}
+											{#if tag}
+												<span class="dot" style="background: {tag.color ?? '#666'}" title={tag.name}></span>
+											{/if}
+										{/each}
+									</div>
+								</div>
+							</article>
+						{/each}
+					</div>
+				</div>
 			</div>
 		</div>
-		<ArtifactFilterSidebar
-			bind:search
-			bind:tagFilter
-			bind:sortBy
-			bind:groupByTags
-			{tags}
-			on:openTagManager={() => (isTagManagerOpen = true)}
-		/>
-	</aside>
+	{:else if activeTab === 'gallery'}
+		<div class="gallery-container">
+			<div class="gallery-controls">
+				<div class="status-info">
+					<div class="stat-card">
+						<span class="stat-label">Total</span>
+						<span class="stat-value">{generationStatus.total}</span>
+					</div>
+					<div class="stat-card">
+						<span class="stat-label">With Cards</span>
+						<span class="stat-value">{generationStatus.withCards}</span>
+					</div>
+					<div class="stat-card">
+						<span class="stat-label">Selected</span>
+						<span class="stat-value">{generationStatus.selected}</span>
+					</div>
+				</div>
 
-	<main class="grid-area">
-		{#if loading}
-			<div class="loading">Loading artifacts...</div>
-		{:else}
-			<div class="grid-header">
-				<span>{filteredArtifacts.length} Artifacts found</span>
-			</div>
-			<div class="grid-content">
-			{#if groupByTags && groupedByTags}
-				{#each groupedByTags as { tag, artifacts }}
-					<div class="tag-group">
-						<div class="tag-group-header">
-							<h3>{tag}</h3>
-							<span class="tag-group-count">{artifacts.length} artifact{artifacts.length !== 1 ? 's' : ''}</span>
+				<div class="action-buttons">
+					<Button
+						variant="primary"
+						onclick={generateSelectedCards}
+						disabled={generatingCards || selectedArtifacts.size === 0}
+					>
+						Generate Selected ({selectedArtifacts.size})
+					</Button>
+					<Button
+						variant="secondary"
+						onclick={generateAllCards}
+						disabled={generatingCards || artifacts.length === 0}
+					>
+						Generate All
+					</Button>
+					<Button variant="secondary" onclick={() => (isGalleryOpen = true)}>
+						View Gallery ({generationStatus.withCards})
+					</Button>
+				</div>
+
+				{#if generatingCards}
+					<div class="progress-bar">
+						<div class="progress-label">
+							Generating... ({generationProgress.current}/{generationProgress.total})
 						</div>
-						<ArtifactGrid
-							artifacts={artifacts}
-							{origins}
-							guardians={guardians}
-							{runes}
-							{tags}
-							on:edit={(e) => openEdit(e.detail)}
-							on:delete={(e) => handleDelete(e.detail)}
-						/>
+						<div class="progress-track">
+							<div
+								class="progress-fill"
+								style="width: {(generationProgress.current / generationProgress.total) * 100}%"
+							></div>
+						</div>
+					</div>
+				{/if}
+
+				<div class="selection-controls">
+					<button class="btn-link" onclick={selectAll}>Select All</button>
+					<button class="btn-link" onclick={deselectAll}>Deselect All</button>
+				</div>
+			</div>
+
+			<div class="artifacts-grid">
+				{#each filteredArtifacts as artifact (artifact.id)}
+					<div
+						class="artifact-card"
+						class:selected={selectedArtifacts.has(artifact.id)}
+						role="button"
+						tabindex="0"
+						onclick={() => toggleSelection(artifact.id)}
+						onkeydown={(e) => {
+							if (e.key === 'Enter' || e.key === ' ') {
+								e.preventDefault();
+								toggleSelection(artifact.id);
+							}
+						}}
+					>
+						<div class="card-header">
+							<input
+								type="checkbox"
+								checked={selectedArtifacts.has(artifact.id)}
+								onclick={(e) => e.stopPropagation()}
+								onchange={() => toggleSelection(artifact.id)}
+							/>
+							<h3>{artifact.name}</h3>
+							{#if artifact.card_image_path}
+								<span class="status-badge-check">✓</span>
+							{/if}
+						</div>
+						<p class="benefit">{artifact.benefit || 'No benefit description'}</p>
+						<div class="card-footer">
+							{#if artifact.guardian_id}
+								<span class="tag guardian-tag">Guardian</span>
+							{/if}
+							{#if artifact.tag_ids && artifact.tag_ids.length > 0}
+								{#each artifact.tag_ids.slice(0, 2) as tagId}
+									{@const tag = tags.find((t) => t.id === tagId)}
+									{#if tag}
+										<span class="tag" style="background-color: {tag.color}20; border-color: {tag.color}">
+											{tag.name}
+										</span>
+									{/if}
+								{/each}
+								{#if artifact.tag_ids.length > 2}
+									<span class="tag">+{artifact.tag_ids.length - 2}</span>
+								{/if}
+							{/if}
+						</div>
 					</div>
 				{/each}
-			{:else}
-				<ArtifactGrid
-					artifacts={filteredArtifacts}
-					{origins}
-					guardians={guardians}
-					{runes}
-					{tags}
-					on:edit={(e) => openEdit(e.detail)}
-					on:delete={(e) => handleDelete(e.detail)}
-				/>
-			{/if}
 			</div>
-		{/if}
-	</main>
+		</div>
+	{/if}
+</PageLayout>
 
 	<ArtifactEditorDrawer
 		bind:isOpen={isEditorOpen}
@@ -380,148 +997,610 @@ $: filteredArtifacts = artifacts
 	/>
 
 	<ArtifactCardGallery bind:isOpen={isGalleryOpen} {artifacts} />
-</div>
 
+<ConfirmDialog
+	bind:open={confirmOpen}
+	message={confirmMessage}
+	variant="danger"
+	onconfirm={() => confirmAction?.()}
+/>
 
 <style>
-	/* Break out of the parent container constraints if possible, 
-       but since we are inside a padded main, we just fill it. */
-	.artifacts-dashboard {
-		display: flex;
-		height: calc(100vh - 6rem); /* Approximate height minus header/padding */
-		gap: 1rem;
-		margin: -1rem; /* Negative margin to counteract some parent padding if needed */
-		width: calc(100% + 2rem); /* Counteract negative margin to fill width */
+	.artifact-count {
+		font-size: 0.7rem;
+		color: #64748b;
 	}
 
-	.sidebar-area {
-		width: 280px;
-		display: flex;
-		flex-direction: column;
-		background: rgba(15, 23, 42, 0.4);
-		border-radius: 12px;
-		border: 1px solid rgba(148, 163, 184, 0.1);
-		overflow: hidden;
-		flex-shrink: 0;
+	.loading-state {
+		padding: 1rem;
+		text-align: center;
+		color: #64748b;
+		font-size: 0.75rem;
+	}
+
+	/* ========== Generator Styles ========== */
+
+	.generator-layout {
+		display: grid;
+		grid-template-columns: 250px 1fr;
+		gap: 1rem;
+		align-items: start;
+	}
+
+	@media (max-width: 1024px) {
+		.generator-layout {
+			grid-template-columns: 1fr;
+		}
+	}
+
+	.sidebar-panel {
+		background: rgba(15, 23, 42, 0.65);
+		border: 1px solid rgba(148, 163, 184, 0.18);
+		border-radius: 8px;
+		padding: 0.75rem;
+		position: sticky;
+		top: 1rem;
+		max-height: calc(100vh - 2rem);
+		overflow-y: auto;
 	}
 
 	.sidebar-header {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		margin-bottom: 0.75rem;
+		gap: 0.5rem;
+	}
+
+	.sidebar-panel h3 {
+		margin: 0;
+		font-size: 0.85rem;
+		color: #cbd5f5;
+	}
+
+	.template-list {
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
+	}
+
+	.template-item {
+		display: flex;
+		align-items: center;
+		background: rgba(30, 41, 59, 0.4);
+		border-radius: 6px;
+		overflow: hidden;
+		transition: background 0.2s;
+	}
+
+	.template-item:hover {
+		background: rgba(30, 41, 59, 0.8);
+	}
+
+	.template-item.active {
+		background: rgba(59, 130, 246, 0.2);
+		border: 1px solid rgba(59, 130, 246, 0.4);
+	}
+
+	.template-btn {
+		flex: 1;
+		border: none;
+		background: none;
+		color: #f8fafc;
+		padding: 0.4rem 0.6rem;
+		text-align: left;
+		cursor: pointer;
+		font-size: 0.75rem;
+		display: flex;
+		align-items: center;
+		gap: 0.4rem;
+	}
+
+	.status-dot {
+		width: 6px;
+		height: 6px;
+		border-radius: 50%;
+		background: #475569;
+	}
+
+	.status-dot.on {
+		background: #4ade80;
+		box-shadow: 0 0 5px #4ade80;
+	}
+
+	.icon-btn {
+		border: none;
+		background: none;
+		color: #cbd5f5;
+		padding: 0.4rem;
+		cursor: pointer;
+		font-size: 0.75rem;
+	}
+
+	.icon-btn:hover {
+		color: white;
+	}
+
+	.delete-btn {
+		border: none;
+		background: none;
+		color: #94a3b8;
+		padding: 0.4rem;
+		cursor: pointer;
+		font-size: 1rem;
+		line-height: 1;
+	}
+
+	.delete-btn:hover {
+		color: #f87171;
+	}
+
+	.main-panel {
+		display: flex;
+		flex-direction: column;
+		gap: 1rem;
+	}
+
+	.config-panel {
+		background: rgba(15, 23, 42, 0.65);
+		border: 1px solid rgba(148, 163, 184, 0.18);
+		border-radius: 8px;
+		padding: 1rem;
+	}
+
+	.panel-header {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		margin-bottom: 1rem;
+		gap: 0.5rem;
+		flex-wrap: wrap;
+	}
+
+	.panel-header h2 {
+		margin: 0;
+		font-size: 1rem;
+		color: #f8fafc;
+	}
+
+	.header-actions {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+	}
+
+	.active-toggle {
+		display: flex;
+		align-items: center;
+		gap: 0.4rem;
+		cursor: pointer;
+		color: #cbd5f5;
+		font-size: 0.75rem;
+		background: rgba(30, 41, 59, 0.5);
+		padding: 0.3rem 0.6rem;
+		border-radius: 16px;
+		border: 1px solid rgba(148, 163, 184, 0.2);
+	}
+
+	.active-toggle input {
+		width: auto;
+		margin: 0;
+	}
+
+	.config-grid {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: 1rem;
+		margin-bottom: 1rem;
+	}
+
+	@media (max-width: 768px) {
+		.config-grid {
+			grid-template-columns: 1fr;
+		}
+	}
+
+	.config-col {
+		display: flex;
+		flex-direction: column;
+		gap: 0.75rem;
+	}
+
+	.config-panel label {
+		display: block;
+		font-size: 0.7rem;
+		color: #94a3b8;
+		margin-bottom: 0.25rem;
+	}
+
+	.config-panel input,
+	.config-panel select,
+	.config-panel textarea {
+		width: 100%;
+		padding: 0.4rem;
+		border-radius: 6px;
+		background: rgba(15, 23, 42, 0.8);
+		border: 1px solid rgba(148, 163, 184, 0.2);
+		color: #f8fafc;
+		font-size: 0.75rem;
+	}
+
+	.compact-tags {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.3rem;
+	}
+
+	.compact-tag {
+		border: 1px solid var(--tag-color);
+		color: var(--tag-color);
+		background: transparent;
+		border-radius: 4px;
+		padding: 2px 6px;
+		font-size: 0.7rem;
+		cursor: pointer;
+		opacity: 0.6;
+	}
+
+	.compact-tag.active {
+		background: var(--tag-color);
+		color: #0f172a;
+		opacity: 1;
+	}
+
+	.mini-recipe-editor {
+		background: rgba(0, 0, 0, 0.2);
+		padding: 0.4rem;
+		border-radius: 6px;
+	}
+
+	.mini-header {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		margin-bottom: 0.4rem;
+	}
+
+	.btn-tiny {
+		padding: 1px 6px;
+		font-size: 0.7rem;
+		background: rgba(148, 163, 184, 0.2);
+		border: 1px solid rgba(148, 163, 184, 0.3);
+		color: #f8fafc;
+		border-radius: 4px;
+		cursor: pointer;
+	}
+
+	.mini-row {
+		display: grid;
+		grid-template-columns: 1fr 50px 20px;
+		gap: 0.4rem;
+		margin-bottom: 0.25rem;
+	}
+
+	.origin-bar {
+		border-top: 1px solid rgba(148, 163, 184, 0.18);
+		padding-top: 0.75rem;
+	}
+
+	.origin-bar-header {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		margin-bottom: 0.5rem;
+		color: #94a3b8;
+	}
+
+	.origin-chips {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.3rem;
+		max-height: 120px;
+		overflow-y: auto;
+	}
+
+	.origin-chip {
+		background: rgba(148, 163, 184, 0.1);
+		border: 1px solid transparent;
+		color: #cbd5f5;
+		padding: 0.2rem 0.5rem;
+		border-radius: 99px;
+		font-size: 0.7rem;
+		cursor: pointer;
+		transition: all 0.2s;
+	}
+
+	.origin-chip:hover {
+		background: rgba(148, 163, 184, 0.2);
+	}
+
+	.origin-chip.active {
+		background: rgba(59, 130, 246, 0.2);
+		border-color: rgba(59, 130, 246, 0.5);
+		color: #60a5fa;
+	}
+
+	.preview-panel {
+		background: rgba(15, 23, 42, 0.65);
+		border: 1px solid rgba(148, 163, 184, 0.18);
+		border-radius: 8px;
+		padding: 1rem;
+	}
+
+	.preview-header {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		margin-bottom: 0.75rem;
+	}
+
+	.preview-header h2 {
+		margin: 0;
+		font-size: 0.9rem;
+		color: #f8fafc;
+	}
+
+	.status-badge {
+		font-size: 0.7rem;
+		padding: 0.2rem 0.5rem;
+		border-radius: 12px;
+		font-weight: 500;
+	}
+
+	.status-badge.live {
+		background: rgba(74, 222, 128, 0.15);
+		color: #4ade80;
+		border: 1px solid rgba(74, 222, 128, 0.3);
+	}
+
+	.status-badge.draft {
+		background: rgba(148, 163, 184, 0.15);
+		color: #cbd5f5;
+		border: 1px solid rgba(148, 163, 184, 0.3);
+	}
+
+	.preview-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+		gap: 0.5rem;
+	}
+
+	.artifact-preview {
+		padding: 0.6rem;
+		min-height: 80px;
+		display: flex;
+		flex-direction: column;
+		gap: 0.4rem;
+		font-size: 0.75rem;
+		background: rgba(30, 41, 59, 0.4);
+		border: 1px solid rgba(148, 163, 184, 0.1);
+		border-radius: 6px;
+	}
+
+	.preview-top {
+		display: flex;
+		justify-content: space-between;
+		align-items: baseline;
+	}
+
+	.preview-top h3 {
+		margin: 0;
+		font-size: 0.85rem;
+		color: #f8fafc;
+	}
+
+	.benefit {
+		margin: 0;
+		font-size: 0.7rem;
+		color: #cbd5f5;
+		flex: 1;
+	}
+
+	.preview-meta {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		border-top: 1px solid rgba(255, 255, 255, 0.05);
+		padding-top: 0.4rem;
+		margin-top: auto;
+	}
+
+	.mini-recipe span {
+		display: inline-block;
+		font-size: 0.65rem;
+		background: rgba(0, 0, 0, 0.3);
+		padding: 1px 3px;
+		border-radius: 3px;
+		margin-right: 2px;
+		color: #a5b4fc;
+	}
+
+	.mini-tags {
+		display: flex;
+		gap: 2px;
+	}
+
+	.dot {
+		width: 6px;
+		height: 6px;
+		border-radius: 50%;
+	}
+
+	.muted-text {
+		color: #64748b;
+		font-size: 0.75rem;
+		text-align: center;
+		padding: 0.75rem 0;
+	}
+
+	/* ========== Gallery Styles ========== */
+
+	.gallery-container {
+		display: flex;
+		flex-direction: column;
+		gap: 1rem;
+	}
+
+	.gallery-controls {
+		background: rgba(15, 23, 42, 0.65);
+		border: 1px solid rgba(148, 163, 184, 0.18);
+		border-radius: 8px;
 		padding: 1rem;
 		display: flex;
 		flex-direction: column;
 		gap: 0.75rem;
-		border-bottom: 1px solid rgba(148, 163, 184, 0.1);
-		background: rgba(15, 23, 42, 0.6);
 	}
 
-	.sidebar-header h2 {
-		margin: 0;
-		font-size: 1.1rem;
+	.status-info {
+		display: flex;
+		gap: 0.75rem;
+		flex-wrap: wrap;
 	}
 
-	.header-actions {
+	.stat-card {
+		flex: 1;
+		min-width: 120px;
+		background: rgba(30, 41, 59, 0.6);
+		border-radius: 6px;
+		padding: 0.75rem;
+		display: flex;
+		flex-direction: column;
+		gap: 0.4rem;
+		border: 1px solid rgba(148, 163, 184, 0.1);
+	}
+
+	.stat-label {
+		color: #94a3b8;
+		font-size: 0.7rem;
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+	}
+
+	.stat-value {
+		color: #f8fafc;
+		font-size: 1.5rem;
+		font-weight: 700;
+	}
+
+	.action-buttons {
 		display: flex;
 		gap: 0.5rem;
 		flex-wrap: wrap;
 	}
 
-	.btn-secondary {
-		background: #64748b;
-		color: white;
-		border: none;
-		padding: 0.4rem 0.8rem;
-		border-radius: 6px;
-		font-size: 0.9rem;
-		font-weight: 600;
-		cursor: pointer;
-		transition: background 0.2s;
+	.progress-bar {
+		margin-top: 0.5rem;
 	}
 
-	.btn-secondary:hover:not(:disabled) {
-		background: #475569;
+	.progress-label {
+		color: #cbd5e1;
+		font-size: 0.75rem;
+		margin-bottom: 0.4rem;
 	}
 
-	.btn-secondary:disabled {
-		opacity: 0.5;
-		cursor: not-allowed;
-	}
-
-	.grid-area {
-		flex: 1;
-		display: flex;
-		flex-direction: column;
-		background: rgba(15, 23, 42, 0.2);
-		border-radius: 12px;
-		border: 1px solid rgba(148, 163, 184, 0.1);
+	.progress-track {
+		height: 6px;
+		background: rgba(30, 41, 59, 0.6);
+		border-radius: 4px;
 		overflow: hidden;
-		min-height: 0;
 	}
 
-	.grid-header {
-		padding: 0.75rem 1rem;
-		border-bottom: 1px solid rgba(148, 163, 184, 0.1);
-		color: #94a3b8;
-		font-size: 0.9rem;
-		flex-shrink: 0;
+	.progress-fill {
+		height: 100%;
+		background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+		transition: width 0.3s ease;
 	}
 
-	.grid-content {
-		flex: 1;
-		overflow-y: auto;
-		min-height: 0;
-		padding: 1rem;
+	.selection-controls {
+		display: flex;
+		gap: 0.75rem;
 	}
 
-	.loading {
-		padding: 2rem;
-		text-align: center;
-		color: #94a3b8;
-	}
-
-	.btn-primary {
-		background: #3b82f6;
-		color: white;
+	.btn-link {
+		background: none;
 		border: none;
-		padding: 0.4rem 0.8rem;
-		border-radius: 6px;
-		font-size: 0.9rem;
+		color: #3b82f6;
+		font-size: 0.75rem;
 		font-weight: 600;
 		cursor: pointer;
+		padding: 0;
+		text-decoration: underline;
 	}
 
-	.tag-group {
-		margin-bottom: 2rem;
+	.btn-link:hover {
+		color: #60a5fa;
 	}
 
-	.tag-group-header {
+	.artifacts-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+		gap: 0.75rem;
+	}
+
+	.artifact-card {
+		background: rgba(15, 23, 42, 0.4);
+		border: 2px solid rgba(148, 163, 184, 0.1);
+		border-radius: 8px;
+		padding: 0.75rem;
+		cursor: pointer;
+		transition: all 0.2s;
+	}
+
+	.artifact-card:hover {
+		border-color: rgba(148, 163, 184, 0.3);
+		transform: translateY(-2px);
+		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+	}
+
+	.artifact-card.selected {
+		border-color: #3b82f6;
+		background: rgba(59, 130, 246, 0.1);
+	}
+
+	.card-header {
 		display: flex;
-		justify-content: space-between;
 		align-items: center;
-		margin-bottom: 1rem;
-		padding-bottom: 0.5rem;
-		border-bottom: 2px solid rgba(148, 163, 184, 0.2);
+		gap: 0.5rem;
+		margin-bottom: 0.5rem;
 	}
 
-	.tag-group-header h3 {
+	.card-header h3 {
+		flex: 1;
 		margin: 0;
-		font-size: 1.25rem;
-		color: #f8fafc;
-		font-weight: 700;
-	}
-
-	.tag-group-count {
 		font-size: 0.9rem;
-		color: #94a3b8;
+		color: #f8fafc;
 	}
 
-	@media (max-width: 768px) {
-		.artifacts-dashboard {
-			flex-direction: column;
-			height: auto;
-		}
-		.sidebar-area {
-			width: 100%;
-			height: auto;
-		}
+	.card-header input[type='checkbox'] {
+		cursor: pointer;
+		width: 16px;
+		height: 16px;
+	}
+
+	.status-badge-check {
+		color: #10b981;
+		font-size: 1rem;
+	}
+
+	.card-footer {
+		display: flex;
+		gap: 0.4rem;
+		flex-wrap: wrap;
+	}
+
+	.tag {
+		padding: 0.2rem 0.4rem;
+		border-radius: 4px;
+		font-size: 0.7rem;
+		font-weight: 600;
+		background: rgba(255, 255, 255, 0.1);
+		border: 1px solid rgba(255, 255, 255, 0.2);
+		color: rgba(255, 255, 255, 0.8);
+	}
+
+	.guardian-tag {
+		background: rgba(239, 68, 68, 0.2);
+		border-color: #ef4444;
+		color: #fca5a5;
 	}
 </style>

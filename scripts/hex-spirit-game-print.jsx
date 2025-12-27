@@ -63,29 +63,58 @@ function costToFolder(cost) {
     }
 }
 
-for (var i = 0; i < unique.length; i++) {
-    var row = unique[i];
-    var artFile = new File(artFolder + '/' + row['ArtRawFile']);
-    if (!artFile.exists) {
-        alert('Missing art raw for ' + row['Name'] + ' (' + row['ArtRawFile'] + ')');
-        continue;
-    }
+// Suppress all dialogs during batch processing
+var originalDialogMode = app.displayDialogs;
+app.displayDialogs = DialogModes.NO;
 
-    var folder = costToFolder(row['Cost']);
-    var doc = app.open(templateFile);
-    try {
-        configureRarity(doc, costFolders, folder);
-        swapLayerImage(doc, ['Hex', 'Art', 'IMAGE_PLACEHOLDER'], artFile);
-        updateText(doc, row, folder);
-        savePng(doc, exportFolder, folder, row['GamePrintFile']);
-    } catch (err) {
-        alert('Failed on ' + row['Name'] + ': ' + err.message);
-    } finally {
-        doc.close(SaveOptions.DONOTSAVECHANGES);
-    }
+// Open template once
+var doc = app.open(templateFile);
+var failedItems = [];
+var successCount = 0;
+
+// Cache the placeholder layer reference BEFORE any replacements (name changes after first replace)
+var artPlaceholder = findLayer(doc, ['Hex', 'Art', 'IMAGE_PLACEHOLDER']);
+if (!artPlaceholder) {
+    alert('IMAGE_PLACEHOLDER layer not found in template');
+    doc.close(SaveOptions.DONOTSAVECHANGES);
+    app.displayDialogs = originalDialogMode;
+    exit();
 }
 
-alert('Export finished! Files saved to ' + exportFolder.fsName);
+// Cache the original placeholder bounds - must capture BEFORE first replacement
+var originalPlaceholderRect = boundsToRect(artPlaceholder.bounds);
+
+try {
+    for (var i = 0; i < unique.length; i++) {
+        var row = unique[i];
+        var artFile = new File(artFolder + '/' + row['ArtRawFile']);
+        if (!artFile.exists) {
+            failedItems.push(row['Name'] + ' (missing: ' + row['ArtRawFile'] + ')');
+            continue;
+        }
+
+        var folder = costToFolder(row['Cost']);
+        try {
+            configureRarity(doc, costFolders, folder);
+            replaceLayerContents(doc, artPlaceholder, artFile, originalPlaceholderRect);
+            updateText(doc, row, folder);
+            savePng(doc, exportFolder, folder, row['GamePrintFile']);
+            successCount++;
+        } catch (err) {
+            failedItems.push(row['Name'] + ': ' + err.message);
+        }
+    }
+} finally {
+    doc.close(SaveOptions.DONOTSAVECHANGES);
+    app.displayDialogs = originalDialogMode;
+}
+
+var msg = 'Export finished! ' + successCount + '/' + unique.length + ' files saved to ' + exportFolder.fsName;
+if (failedItems.length > 0) {
+    msg += '\n\nFailed items (' + failedItems.length + '):\n' + failedItems.slice(0, 10).join('\n');
+    if (failedItems.length > 10) msg += '\n... and ' + (failedItems.length - 10) + ' more';
+}
+alert(msg);
 
 // === HELPERS ===
 function validatePath(fileOrFolder, label) {
@@ -263,16 +292,40 @@ function fitLayerToRect(layer, targetRect) {
     }
 }
 
-function replaceLayerContents(doc, layer, imageFile) {
+function replaceLayerContents(doc, layer, imageFile, targetRect) {
     app.activeDocument = doc;
     doc.activeLayer = layer;
-    var targetRect = boundsToRect(layer.bounds);
 
+    // Replace the smart object contents
     var action = stringIDToTypeID('placedLayerReplaceContents');
     var desc = new ActionDescriptor();
     desc.putPath(charIDToTypeID('null'), imageFile);
     desc.putInteger(charIDToTypeID('Lnkd'), 0);
     executeAction(action, desc, DialogModes.NO);
+
+    // Reset smart object to 100% scale first (clears any inherited transform)
+    resetSmartObjectTransform();
+
     fitLayerToRect(doc.activeLayer, targetRect);
+}
+
+function resetSmartObjectTransform() {
+    // Use Free Transform to reset to 100% - this clears any inherited scale
+    var idTrnf = charIDToTypeID('Trnf');
+    var desc = new ActionDescriptor();
+    var idnull = charIDToTypeID('null');
+    var ref = new ActionReference();
+    ref.putEnumerated(charIDToTypeID('Lyr '), charIDToTypeID('Ordn'), charIDToTypeID('Trgt'));
+    desc.putReference(idnull, ref);
+    desc.putEnumerated(charIDToTypeID('FTcs'), charIDToTypeID('QCSt'), charIDToTypeID('Qcsa'));
+    var idOfst = charIDToTypeID('Ofst');
+    var descOfst = new ActionDescriptor();
+    descOfst.putUnitDouble(charIDToTypeID('Hrzn'), charIDToTypeID('#Pxl'), 0);
+    descOfst.putUnitDouble(charIDToTypeID('Vrtc'), charIDToTypeID('#Pxl'), 0);
+    desc.putObject(idOfst, idOfst, descOfst);
+    desc.putUnitDouble(charIDToTypeID('Wdth'), charIDToTypeID('#Prc'), 100);
+    desc.putUnitDouble(charIDToTypeID('Hght'), charIDToTypeID('#Prc'), 100);
+    desc.putEnumerated(charIDToTypeID('Intr'), charIDToTypeID('Intp'), charIDToTypeID('Bcbc'));
+    executeAction(idTrnf, desc, DialogModes.NO);
 }
 

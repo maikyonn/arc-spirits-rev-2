@@ -9,7 +9,8 @@
 	import { createEventDispatcher } from 'svelte';
 	import { fly } from 'svelte/transition';
 	import { supabase } from '$lib/api/supabaseClient';
-	import { generateArtifactCardPNG } from '$lib/utils/artifactCardGenerator';
+	import { generateArtifactCardPNG } from '$lib/generators/cards';
+	import { processAndUploadImage } from '$lib/utils/storage';
 
 export let isOpen = false;
 export let artifact: Partial<ArtifactRow> = {};
@@ -71,28 +72,26 @@ let generatingCard = false;
 		try {
 			// Generate PNG directly using Canvas API
 			const pngBlob = await generateArtifactCardPNG(artifact as ArtifactRow, origins, runes, tags, guardians);
-			
-			// Convert blob to File
-			const fileName = `artifacts/${artifact.id}/card.png`;
-			const file = new File([pngBlob], 'card.png', { type: 'image/png' });
 
-			// Upload to Supabase storage
-			const { error: uploadError } = await supabase.storage
-				.from('game_assets')
-				.upload(fileName, file, {
-					contentType: 'image/png',
-					upsert: true,
-				});
+			// Upload with transparent area cropping
+			const { data, error: uploadError } = await processAndUploadImage(pngBlob, {
+				folder: `artifacts/${artifact.id}`,
+				filename: 'card',
+				cropTransparent: true,
+				upsert: true
+			});
 
 			if (uploadError) {
 				throw new Error(`Failed to upload card image: ${uploadError.message}`);
 			}
 
+			const uploadedPath = data?.path ?? '';
+
 			// Update artifact with card_image_path
 			const { error: updateError } = await supabase
 				.from('artifacts')
 				.update({
-					card_image_path: fileName,
+					card_image_path: uploadedPath,
 					updated_at: new Date().toISOString(),
 				})
 				.eq('id', artifact.id);
@@ -102,7 +101,7 @@ let generatingCard = false;
 			}
 
 			// Update local artifact object
-			artifact.card_image_path = fileName;
+			artifact.card_image_path = uploadedPath;
 
 			alert('Card image generated successfully!');
 		} catch (error) {

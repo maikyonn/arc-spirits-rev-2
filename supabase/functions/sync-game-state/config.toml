@@ -1,0 +1,2 @@
+[functions.sync-game-state]
+verify_jwt = false

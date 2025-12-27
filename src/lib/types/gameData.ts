@@ -44,6 +44,47 @@ export type OriginRow = {
 	icon_token_png: string | null;
 	color: string | null;
 	description: string | null;
+	calling_card: Json | null;
+	created_at: string | null;
+	updated_at: string | null;
+};
+
+export type CallingCardBreakpoint = {
+	count: number; // e.g., 3 or 6 for "3 Unique", "6 Unique"
+	label?: string; // optional label like "Unique" or custom
+	icon_ids: string[]; // Array of icon pool IDs to display for this breakpoint
+};
+
+export type CallingCardEffect = {
+	type: 'benefit';
+	description: string;
+	value?: number;
+};
+
+export type CallingCard = {
+	enabled: boolean;
+	hex_spirit_id: string | null; // The Hex Spirit this calling card summons
+	breakpoints: CallingCardBreakpoint[];
+};
+
+export type CallingOrbTemplateData = {
+	backgroundImage: string | null;
+	textPositions: {
+		breakpointIndex: number;
+		x: number;
+		y: number;
+		fontSize: number;
+		color: string;
+		fontWeight: string;
+		gap?: number;
+	}[];
+};
+
+export type CallingOrbImageRow = {
+	id: string;
+	origin_id: string;
+	image_path: string;
+	template_data: Json | null;
 	created_at: string | null;
 	updated_at: string | null;
 };
@@ -85,12 +126,15 @@ export type HexSpiritRow = {
 	};
 	created_at: string | null;
 	game_print_image_path: string | null;
+	game_print_no_icons: string | null;
 	art_raw_image_path: string | null;
 	updated_at: string | null;
 	/** Optional override for the PSD folder used during Photoshop export. If null, folder is derived from cost. */
 	psd_folder_override: string | null;
 	/** Array of rune IDs required to play this spirit. Duplicates mean multiple of that rune needed. */
 	rune_cost: string[];
+	/** If true, game_print_image_path is manually set and should not be overwritten by icon placer. */
+	manual_game_print: boolean;
 };
 
 export type SpiritIconSlot = never; // legacy placeholder removed
@@ -157,6 +201,25 @@ export type ExtraComponentRow = {
 	updated_at: string | null;
 };
 
+// Centralized icon pool for reward icons
+// All icon sources (origins, classes, runes, dice_sides) sync to this table via triggers
+// Uploaded icons are inserted directly into this table
+export type IconPoolSourceType = 'origin' | 'class' | 'rune' | 'dice_side' | 'uploaded';
+
+export type IconPoolRow = {
+	id: string;
+	name: string;
+	source_type: IconPoolSourceType;
+	source_id: string | null;
+	source_table: string | null; // 'origins' | 'classes' | 'runes' | 'dice_sides' | null (for uploaded)
+	file_path: string;
+	metadata?: Record<string, unknown>; // Source-specific data (color, position, origin_id, etc.)
+	tags?: string[]; // Tags for organizing icons, especially uploaded ones
+	export_as_token?: boolean;
+	created_at: string | null;
+	updated_at: string | null;
+};
+
 // Reward row types for monster cards
 export type RewardRowType = 'all_in_combat' | 'all_losers' | 'all_winners' | 'one_winner' | 'tournament';
 
@@ -187,6 +250,8 @@ export type MonsterRow = {
 	order_num: number;
 	card_image_path: string | null;
 	special_conditions: string | null;
+	/** Number of copies of this monster in the deck. Defaults to 1. */
+	quantity: number;
 	created_at: string | null;
 	updated_at: string | null;
 	// Legacy fields kept for migration compatibility
@@ -296,3 +361,23 @@ export type SpecialCategoryRow = {
 	created_at: string | null;
 	updated_at: string | null;
 };
+
+export type AbyssScenarioRow = {
+	id: string;
+	name: string;
+	description: string | null;
+	order_num: number;
+	created_at: string | null;
+	updated_at: string | null;
+};
+
+export type ScenarioCardRow = {
+	id: string;
+	scenario_id: string;
+	card_type: 'monster' | 'event';
+	card_id: string;
+	order_num: number;
+	created_at: string | null;
+};
+
+// IconAsset type removed - consolidated into IconPoolRow with source_type='uploaded'

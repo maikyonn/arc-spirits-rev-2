@@ -4,7 +4,7 @@
 	import { supabase } from '$lib/api/supabaseClient';
 	import type { DiceSideRow } from '$lib/types/gameData';
 	import { EditorModal } from '$lib';
-	import { generateDiceSide } from '$lib/utils/diceSideGenerator';
+	import { generateDiceSide } from '$lib/generators/dice';
 	import {
 		DICE_TYPE_ICONS,
 		DICE_TYPE_LABELS,
@@ -18,6 +18,7 @@
 		type DiceFormData,
 		type DiceType
 	} from '$lib/features/dice/dice';
+	import { processAndUploadImage, deleteStorageFile } from '$lib/utils/storage';
 
 	const gameAssetsStorage = supabase.storage.from('game_assets');
 
@@ -321,15 +322,15 @@ async function handleBackgroundUpload(event: Event) {
 
 		// Generate filename based on dice name or ID
 		const diceId = formData.id ?? 'new';
-		const extension = file.name.split('.').pop()?.toLowerCase() ?? 'png';
-		const fileName = `dice_${diceId}_background.${extension}`;
-		const path = `dice_backgrounds/${fileName}`;
+		const fileName = `dice_${diceId}_background`;
+		const folder = 'dice_backgrounds';
 
-		// Upload new background
-		const { error: uploadError } = await gameAssetsStorage.upload(path, file, {
-			cacheControl: '3600',
-			upsert: false,
-			contentType: file.type
+		// Upload new background with transparent area cropping
+		const { data, error: uploadError } = await processAndUploadImage(file, {
+			folder,
+			filename: fileName,
+			cropTransparent: true,
+			upsert: true
 		});
 
 		if (uploadError) {
@@ -337,7 +338,7 @@ async function handleBackgroundUpload(event: Event) {
 		}
 
 		// Update form data
-		formData.background_image_path = path;
+		formData.background_image_path = data?.path ?? '';
 		await loadDiceBackground();
 		await generateAllSideImages();
 	} catch (err) {
@@ -511,16 +512,17 @@ async function exportAllDiceFaces() {
 						const response = await fetch(diceFaceDataUrl);
 						const blob = await response.blob();
 
-						// Create file path
+						// Create file path and upload with transparent area cropping
 						const sanitizedName = sanitizeFileName(diceItem.name);
-						const fileName = `dice_faces/${sanitizedName}_side_${side.side_number}.png`;
-						const fullPath = fileName;
+						const fileName = `${sanitizedName}_side_${side.side_number}`;
+						const folder = 'dice_faces';
 
 						// Upload to storage
-						const { error: uploadError } = await gameAssetsStorage.upload(fullPath, blob, {
-							cacheControl: '3600',
-							upsert: true,
-							contentType: 'image/png'
+						const { data: uploadData, error: uploadError } = await processAndUploadImage(blob, {
+							folder,
+							filename: fileName,
+							cropTransparent: true,
+							upsert: true
 						});
 
 						if (uploadError) {
@@ -530,7 +532,7 @@ async function exportAllDiceFaces() {
 							// Update database with image path
 							const { error: updateError } = await supabase
 								.from('dice_sides')
-								.update({ image_path: fullPath })
+								.update({ image_path: uploadData?.path })
 								.eq('id', side.id);
 
 							if (updateError) {
@@ -635,26 +637,28 @@ async function handleTemplateUpload(event: Event) {
 			await gameAssetsStorage.remove([oldPath]);
 		}
 
-		// Generate filename
-		const extension = file.name.split('.').pop()?.toLowerCase() ?? 'png';
-		const fileName = `global_dice_template.${extension}`;
-		const path = `dice_templates/${fileName}`;
+		// Generate filename and upload with transparent area cropping
+		const fileName = 'global_dice_template';
+		const folder = 'dice_templates';
 
 		// Upload template
-		const { error: uploadError } = await gameAssetsStorage.upload(path, file, {
-			cacheControl: '3600',
-			upsert: true,
-			contentType: file.type
+		const { data, error: uploadError } = await processAndUploadImage(file, {
+			folder,
+			filename: fileName,
+			cropTransparent: true,
+			upsert: true
 		});
 
 		if (uploadError) {
 			throw uploadError;
 		}
 
+		const uploadedPath = data?.path ?? '';
+
 		// Update global template record
 		const { error: updateError } = await supabase
 			.from('dice_templates')
-			.update({ template_image_path: path })
+			.update({ template_image_path: uploadedPath })
 			.eq('id', globalTemplateId);
 
 		if (updateError) {
@@ -662,7 +666,7 @@ async function handleTemplateUpload(event: Event) {
 		}
 
 		// Update local state
-		const { data: urlData } = gameAssetsStorage.getPublicUrl(path);
+		const { data: urlData } = gameAssetsStorage.getPublicUrl(uploadedPath);
 		templateImageUrl = urlData?.publicUrl ?? null;
 	} catch (err) {
 		console.error(err);
@@ -816,23 +820,29 @@ async function generateTemplateImage() {
 			}
 
 			try {
-				// Upload to game_assets bucket
-				const fileName = `dice_templates/exported_template_${editingDice.name.toLowerCase().replace(/[^a-z0-9]/g, '_')}.png`;
-				const { error: uploadError } = await gameAssetsStorage.upload(fileName, blob, {
-					cacheControl: '3600',
-					upsert: true,
-					contentType: 'image/png'
+				// Upload to game_assets bucket with transparent area cropping
+				const sanitizedDiceName = editingDice.name.toLowerCase().replace(/[^a-z0-9]/g, '_');
+				const uploadFileName = `exported_template_${sanitizedDiceName}`;
+				const folder = 'dice_templates';
+
+				const { data: uploadData, error: uploadError } = await processAndUploadImage(blob, {
+					folder,
+					filename: uploadFileName,
+					cropTransparent: true,
+					upsert: true
 				});
 
 				if (uploadError) {
 					throw uploadError;
 				}
 
+				const uploadedPath = uploadData?.path ?? '';
+
 				// Update dice_templates table with exported path (global)
 				if (globalTemplateId) {
 					const { error: updateError } = await supabase
 						.from('dice_templates')
-						.update({ exported_template_path: fileName })
+						.update({ exported_template_path: uploadedPath })
 						.eq('id', globalTemplateId);
 
 					if (updateError) {
@@ -844,7 +854,7 @@ async function generateTemplateImage() {
 				if (editingDice.id) {
 					const { error: diceUpdateError } = await supabase
 						.from('custom_dice')
-						.update({ exported_template_path: fileName })
+						.update({ exported_template_path: uploadedPath })
 						.eq('id', editingDice.id);
 
 					if (diceUpdateError) {

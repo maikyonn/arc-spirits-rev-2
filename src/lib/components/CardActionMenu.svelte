@@ -2,7 +2,7 @@
 	import { onDestroy } from 'svelte';
 
 	export let onEdit: () => void;
-	export let onDelete: () => void;
+	export let onDelete: (() => void) | null = null;
 	export let onGenerate: (() => void) | null = null;
 
 	let isOpen = false;
@@ -22,7 +22,7 @@ function handleEdit(event: MouseEvent) {
 function handleDelete(event: MouseEvent) {
 	event.stopPropagation();
 	isOpen = false;
-	onDelete();
+	onDelete?.();
 }
 
 	function handleClickOutside(event: MouseEvent) {
@@ -70,9 +70,11 @@ function handleDelete(event: MouseEvent) {
 					Generate PNG
 				</button>
 			{/if}
-			<button class="dropdown-item danger" type="button" on:click={handleDelete}>
-				Delete
-			</button>
+			{#if onDelete}
+				<button class="dropdown-item danger" type="button" on:click={handleDelete}>
+					Delete
+				</button>
+			{/if}
 		</div>
 	{/if}
 </div>

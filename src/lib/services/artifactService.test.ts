@@ -8,7 +8,7 @@ describe('artifactService', () => {
             const text = 'Sword of {origin}';
             const origin: OriginRow = {
                 id: '1', name: 'Fire', description: '', icon_emoji: '🔥', icon_png: null, icon_token_png: null, position: 0, created_at: '',
-                color: null, updated_at: null
+                color: null, updated_at: null, calling_card: null
             };
             expect(artifactService.replacePlaceholders(text, origin)).toBe('Sword of Fire');
         });
@@ -22,7 +22,7 @@ describe('artifactService', () => {
             const text = '{origin} {class} Artifact +{quantity}';
             const origin: OriginRow = {
                 id: '1', name: 'Ice', description: '', icon_emoji: '❄️', icon_png: null, icon_token_png: null, position: 0, created_at: '',
-                color: null, updated_at: null
+                color: null, updated_at: null, calling_card: null
             };
             expect(artifactService.replacePlaceholders(text, origin, 10)).toBe('Ice Ice Artifact +10');
             // Note: The current implementation replaces both {origin} and {class} with entity.name if entity is provided.

@@ -1,93 +1,47 @@
 /**
- * Crops empty space (transparent or white) from an image
- * @param file The image file to crop
+ * Crops transparent areas from an image using trim-canvas library
+ * @param input The image file or blob to crop
+ * @param mimeType Optional mime type (defaults to 'image/png')
  * @returns A Promise that resolves to a cropped Blob
  */
-export async function cropEmptySpace(file: File): Promise<Blob> {
+export async function cropTransparentArea(input: File | Blob, mimeType?: string): Promise<Blob> {
+	const { default: trimCanvas } = await import('trim-canvas');
+	const type = mimeType ?? ((input instanceof File ? input.type : 'image/png') || 'image/png');
+
 	return new Promise((resolve, reject) => {
 		const img = new Image();
+		const url = URL.createObjectURL(input);
+
 		img.onload = () => {
+			// Cleanup object URL
+			URL.revokeObjectURL(url);
+
 			try {
+				// Draw image to canvas
 				const canvas = document.createElement('canvas');
+				canvas.width = img.width;
+				canvas.height = img.height;
 				const ctx = canvas.getContext('2d');
 				if (!ctx) {
 					reject(new Error('Could not get canvas context'));
 					return;
 				}
+				ctx.drawImage(img, 0, 0);
 
-				// Create a temporary canvas to analyze pixels
-				const tempCanvas = document.createElement('canvas');
-				tempCanvas.width = img.width;
-				tempCanvas.height = img.height;
-				const tempCtx = tempCanvas.getContext('2d');
-				if (!tempCtx) {
-					reject(new Error('Could not get temp canvas context'));
-					return;
-				}
-
-				tempCtx.drawImage(img, 0, 0);
-				const imageData = tempCtx.getImageData(0, 0, img.width, img.height);
-				const data = imageData.data;
-
-				// Find bounding box of non-empty pixels
-				let minX = img.width;
-				let minY = img.height;
-				let maxX = 0;
-				let maxY = 0;
-
-				for (let y = 0; y < img.height; y++) {
-					for (let x = 0; x < img.width; x++) {
-						const idx = (y * img.width + x) * 4;
-						const r = data[idx];
-						const g = data[idx + 1];
-						const b = data[idx + 2];
-						const a = data[idx + 3];
-
-						// Check if pixel is not empty (not transparent and not white)
-						const isTransparent = a < 10; // Almost transparent
-						const isWhite = r > 245 && g > 245 && b > 245 && a > 245; // Almost white
-
-						if (!isTransparent && !isWhite) {
-							minX = Math.min(minX, x);
-							minY = Math.min(minY, y);
-							maxX = Math.max(maxX, x);
-							maxY = Math.max(maxY, y);
-						}
-					}
-				}
-
-				// If no content found, return original image
-				if (minX >= maxX || minY >= maxY) {
-					file.arrayBuffer().then((buffer) => resolve(new Blob([buffer], { type: file.type })));
-					return;
-				}
-
-				// Add a small padding (1px) to avoid edge clipping
-				const padding = 1;
-				minX = Math.max(0, minX - padding);
-				minY = Math.max(0, minY - padding);
-				maxX = Math.min(img.width, maxX + padding + 1);
-				maxY = Math.min(img.height, maxY + padding + 1);
-
-				const width = maxX - minX;
-				const height = maxY - minY;
-
-				// Create cropped canvas
-				canvas.width = width;
-				canvas.height = height;
-				ctx.drawImage(img, minX, minY, width, height, 0, 0, width, height);
+				// Use trim-canvas to remove transparent pixels
+				const trimmedCanvas = trimCanvas(canvas);
 
 				// Convert to blob
-				canvas.toBlob(
-					(blob) => {
+				trimmedCanvas.toBlob(
+					(blob: Blob | null) => {
 						if (blob) {
 							resolve(blob);
 						} else {
 							reject(new Error('Failed to create blob from canvas'));
 						}
 					},
-					file.type || 'image/png',
-					0.95 // Quality for JPEG, ignored for PNG
+					type,
+					0.95
 				);
 			} catch (err) {
 				reject(err);
@@ -95,20 +49,16 @@ export async function cropEmptySpace(file: File): Promise<Blob> {
 		};
 
 		img.onerror = () => {
+			URL.revokeObjectURL(url);
 			reject(new Error('Failed to load image'));
 		};
 
-		// Load image from file
-		const reader = new FileReader();
-		reader.onload = (e) => {
-			if (e.target?.result) {
-				img.src = e.target.result as string;
-			}
-		};
-		reader.onerror = () => {
-			reject(new Error('Failed to read file'));
-		};
-		reader.readAsDataURL(file);
+		img.src = url;
 	});
 }
+
+/**
+ * @deprecated Use cropTransparentArea instead
+ */
+export const cropEmptySpace = cropTransparentArea;
 

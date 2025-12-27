@@ -4,30 +4,43 @@
 	import { page } from '$app/stores';
 	import { onMount, onDestroy, tick } from 'svelte';
 
-	const navItems = [
-		{ href: '/', label: 'Overview', icon: '🏠' },
-		{ href: '/origins', label: 'Origins', icon: '🌌' },
-		{ href: '/classes', label: 'Classes', icon: '🛡️' },
-		{ href: '/editions', label: 'Editions', icon: '📦' },
-		{ href: '/runes', label: 'Runes', icon: '🔮' },
-		{ href: '/dice-simulator', label: 'Dice Lab', icon: '🎲' },
-		{ href: '/hex-spirits/cards', label: 'Hex Spirits', icon: '⚔️' },
-		{ href: '/monsters', label: 'Monsters', icon: '👹' },
-		{ href: '/class-analysis', label: 'Class Analysis', icon: '📊' },
-		{ href: '/curve-fitting', label: 'Curve Fitting', icon: '📐' },
-		{ href: '/alternative-dice', label: 'Alt Dice', icon: '🎯' },
-		{ href: '/shop-analysis', label: 'Shop Analysis', icon: '🛒' },
-		{ href: '/hex-spirits-analysis', label: 'Hex Spirits Analysis', icon: '📈' },
-		{ href: '/artifacts', label: 'Artifacts', icon: '🧩' },
-		{ href: '/artifact-generator', label: 'Artifact Generator', icon: '⚡' },
-		{ href: '/quests', label: 'Quests', icon: '🎯' },
-		{ href: '/guardians', label: 'Guardians', icon: '🕯️' },
-		{ href: '/icons', label: 'Icons', icon: '🖍️' },
-	{ href: '/misc-assets', label: 'Misc Assets', icon: '✨' },
-		{ href: '/assets', label: 'Assets', icon: '🖼️' },
-		{ href: '/json-viewer', label: 'JSON Viewer', icon: '📋' },
-		{ href: '/settings', label: 'Settings', icon: '⚙️' }
-	] as const;
+	type NavItem = { href: string; label: string; icon: string };
+	type NavSection = { title: string; items: NavItem[] };
+
+	const navSections: NavSection[] = [
+		{
+			title: 'Core Data',
+			items: [
+				{ href: '/traits', label: 'Traits', icon: '✨' },
+				{ href: '/dice', label: 'Dice', icon: '🎲' },
+				{ href: '/editions', label: 'Editions', icon: '📦' },
+				{ href: '/artifacts', label: 'Artifacts', icon: '🧩' },
+				{ href: '/hex-spirits', label: 'Hex Spirits', icon: '⚔️' },
+				{ href: '/guardians', label: 'Guardians', icon: '🕯️' },
+				{ href: '/arcane-abyss', label: 'Arcane Abyss', icon: '🌀' },
+				{ href: '/icons', label: 'Icons', icon: '🖍️' }
+			]
+		},
+		{
+			title: 'Exports & Analysis',
+			items: [
+				{ href: '/assets', label: 'Assets Gallery', icon: '🖼️' },
+				{ href: '/json-viewer', label: 'JSON Viewer', icon: '📋' },
+				{ href: '/analysis', label: 'Analysis', icon: '📊' },
+				{ href: '/tts-menu', label: 'TTS Menu', icon: '🎮' }
+			]
+		},
+		{
+			title: 'System',
+			items: [
+				{ href: '/schema', label: 'DB Schema', icon: '🗄️' },
+				{ href: '/settings', label: 'Settings', icon: '⚙️' }
+			]
+		}
+	];
+
+	// Flatten for route matching
+	const allNavItems = navSections.flatMap(s => s.items);
 
 	export let children;
 	let isNavOpen = false;
@@ -69,9 +82,9 @@
 
 	$: pathname = $page.url.pathname;
 	$: activeHref = (() => {
-		const exact = navItems.find((item) => item.href === pathname);
+		const exact = allNavItems.find((item) => item.href === pathname);
 		if (exact) return exact.href;
-		const match = navItems.find((item) => pathname.startsWith(item.href) && item.href !== '/');
+		const match = allNavItems.find((item) => pathname.startsWith(item.href) && item.href !== '/');
 		return match ? match.href : '/';
 	})();
 
@@ -118,16 +131,24 @@
 			class="sidebar-nav"
 			style={`--nav-height:${navHeight}px`}
 		>
-			{#each navItems as item}
-				<a
-					href={item.href}
-					class={`nav-button ${activeHref === item.href ? 'is-active' : ''}`}
-					data-sveltekit-preload-data
-					onclick={handleNavigate}
-				>
-					<span class="nav-icon" aria-hidden="true">{item.icon}</span>
-					<span class="nav-label">{item.label}</span>
-				</a>
+			{#each navSections as section, sectionIdx}
+				<div class="nav-section">
+					<h2 class="nav-section__title">{section.title}</h2>
+					{#each section.items as item}
+						<a
+							href={item.href}
+							class={`nav-button ${activeHref === item.href ? 'is-active' : ''}`}
+							data-sveltekit-preload-data
+							onclick={handleNavigate}
+						>
+							<span class="nav-icon" aria-hidden="true">{item.icon}</span>
+							<span class="nav-label">{item.label}</span>
+						</a>
+					{/each}
+				</div>
+				{#if sectionIdx < navSections.length - 1}
+					<hr class="nav-divider" />
+				{/if}
 			{/each}
 		</div>
 	</nav>
@@ -228,9 +249,31 @@
 		flex: 1;
 		display: flex;
 		flex-direction: column;
-		gap: 0.33rem;
-		padding: 1rem 0.75rem;
+		gap: 0.5rem;
+		padding: 0.75rem 0.75rem;
 		overflow-y: auto;
+	}
+
+	.nav-section {
+		display: flex;
+		flex-direction: column;
+		gap: 0.25rem;
+	}
+
+	.nav-section__title {
+		font-size: 0.65rem;
+		font-weight: 600;
+		text-transform: uppercase;
+		letter-spacing: 0.08em;
+		color: rgba(148, 163, 184, 0.7);
+		padding: 0.5rem 0.5rem 0.25rem;
+		margin: 0;
+	}
+
+	.nav-divider {
+		border: none;
+		border-top: 1px solid rgba(148, 163, 184, 0.1);
+		margin: 0.25rem 0;
 	}
 
 	.nav-button {

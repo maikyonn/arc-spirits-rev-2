@@ -12,6 +12,8 @@ export interface MonsterFormData {
 	reward_rows: RewardRow[];
 	order_num: number;
 	special_conditions: string | null;
+	/** Number of copies of this monster in the deck. Defaults to 1. */
+	quantity: number;
 }
 
 const DEFAULT_DAMAGE = 0;
@@ -28,7 +30,8 @@ export function emptyMonsterForm(): MonsterFormData {
 		image_path: null,
 		reward_rows: [],
 		order_num: 0,
-		special_conditions: null
+		special_conditions: null,
+		quantity: 1
 	};
 }
 
@@ -62,7 +65,8 @@ export function monsterRowToForm(row: MonsterRow): MonsterFormData {
 		image_path: row.image_path,
 		reward_rows: rewardRows,
 		order_num: row.order_num ?? 0,
-		special_conditions: row.special_conditions ?? null
+		special_conditions: row.special_conditions ?? null,
+		quantity: row.quantity ?? 1
 	};
 }
 
@@ -95,6 +99,7 @@ export async function saveMonsterRecord(
 		order_num: sanitized.order_num,
 		reward_rows: sanitized.reward_rows,
 		special_conditions: sanitized.special_conditions,
+		quantity: sanitized.quantity,
 		updated_at: new Date().toISOString()
 	};
 
@@ -150,6 +155,7 @@ function sanitizeMonsterForm(form: MonsterFormData): MonsterFormData {
 		? form.reward_rows.map(sanitizeRewardRow).filter(row => row.icon_ids.length > 0)
 		: [];
 	const special_conditions = form.special_conditions?.trim() || null;
+	const quantity = Number.isFinite(form.quantity) ? Math.max(1, Math.round(form.quantity)) : 1;
 
 	return {
 		...form,
@@ -161,6 +167,7 @@ function sanitizeMonsterForm(form: MonsterFormData): MonsterFormData {
 		image_path,
 		order_num,
 		reward_rows,
-		special_conditions
+		special_conditions,
+		quantity
 	};
 }
