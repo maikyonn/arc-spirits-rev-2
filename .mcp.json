@@ -9,7 +9,7 @@
         "mcp",
         "start",
         "--project-dir",
-        "/Users/maikyon/Documents/Programming/ArcSpiritsPlan2/arc-spirits-rev-2"
+        "."
       ]
     },
     "svelte": {
