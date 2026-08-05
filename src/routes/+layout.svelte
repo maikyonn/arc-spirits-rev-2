@@ -16,6 +16,7 @@
 				{ href: '/editions', label: 'Editions', icon: '📦' },
 				{ href: '/scenarios', label: 'Scenarios', icon: '🎭' },
 				{ href: '/hex-spirits', label: 'Hex Spirits', icon: '⚔️' },
+				{ href: '/combined-spirit-data', label: 'Combined Spirit Data', icon: '🧬' },
 				{ href: '/guardians', label: 'Guardians', icon: '🕯️' },
 				{ href: '/icons', label: 'Icons', icon: '🖍️' }
 			]

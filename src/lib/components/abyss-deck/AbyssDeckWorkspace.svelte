@@ -34,6 +34,8 @@
 		card_image_path: string | null;
 		/** Flat array of up to 6 icon IDs awarded on kill. */
 		reward_track: string[];
+		/** Flat array of up to 6 icon IDs awarded when this monster corrupts a player. */
+		corruption_reward_track: string[];
 		stage: 'stage_1' | 'stage_2' | 'stage_3' | 'final_stage' | 'inactive';
 		monster_classification: 'monster' | 'abyss_guardian' | 'boss' | 'final_boss';
 		icon: string | null;
@@ -46,6 +48,7 @@
 		stage_num: number;
 		quantity: number;
 		choose_amount: number;
+		corruption_choose_amount: number;
 	};
 
 	export type EventFormData = {
@@ -103,6 +106,8 @@
 		showEventRewardRows?: boolean;
 		showAttackTypeToggle?: boolean;
 		showStageAsInteger?: boolean;
+		/** Initial corruption rewards for newly created monsters. */
+		defaultCorruptionRewardTrack?: string[];
 	}
 
 	let {
@@ -151,7 +156,8 @@
 		showRewardRows = true,
 		showEventRewardRows = false,
 		showAttackTypeToggle = false,
-		showStageAsInteger = false
+		showStageAsInteger = false,
+		defaultCorruptionRewardTrack = []
 	}: Props = $props();
 
 	const monsterLabelLower = $derived.by(() => monsterLabel.toLowerCase());
@@ -169,6 +175,7 @@
 	const inlineAutosaveTimers = new Map<string, ReturnType<typeof setTimeout>>();
 
 	let rewardTrackPickerOpen = $state(false);
+	let corruptionRewardTrackPickerOpen = $state(false);
 	let dicePoolPickerOpen = $state(false);
 
 	const specialEffectById = $derived.by(() => new Map(specialEffects.map((effect) => [effect.id, effect])));
@@ -314,6 +321,9 @@
 			barrier: monster.barrier ?? 0,
 			card_image_path: (monster as { card_image_path?: string | null }).card_image_path ?? null,
 			reward_track: normalizeRewardTrack((monster as { reward_track?: unknown }).reward_track),
+			corruption_reward_track: normalizeRewardTrack(
+				(monster as { corruption_reward_track?: unknown }).corruption_reward_track
+			),
 			stage: monster.stage,
 			monster_classification: monster.monster_classification ?? 'monster',
 			icon: monster.icon,
@@ -325,7 +335,9 @@
 			attack_type: ((monster as unknown as { attack_type?: string }).attack_type === 'dice_pool') ? 'dice_pool' : 'damage',
 			stage_num: Number((monster as unknown as { stage_num?: number }).stage_num) || 1,
 			quantity: enableQuantities ? (monster.quantity ?? 1) : 1,
-		choose_amount: Number((monster as unknown as { choose_amount?: number }).choose_amount) || 1
+		choose_amount: Number((monster as unknown as { choose_amount?: number }).choose_amount) || 1,
+		corruption_choose_amount:
+			Number((monster as unknown as { corruption_choose_amount?: number }).corruption_choose_amount) || 2
 		};
 	}
 
@@ -378,6 +390,31 @@
 
 	function clearRewardTrack() {
 		monsterFormData.reward_track = [];
+	}
+
+	function setCorruptionRewardTrack(ids: string[]) {
+		monsterFormData.corruption_reward_track = ids.slice(0, 6);
+	}
+
+	function moveCorruptionRewardTrackIcon(fromIndex: number, toIndex: number) {
+		const track = [...(monsterFormData.corruption_reward_track ?? [])];
+		if (fromIndex < 0 || fromIndex >= track.length) return;
+		if (toIndex < 0 || toIndex >= track.length) return;
+		if (fromIndex === toIndex) return;
+		const [moved] = track.splice(fromIndex, 1);
+		track.splice(toIndex, 0, moved);
+		monsterFormData.corruption_reward_track = track;
+	}
+
+	function removeCorruptionRewardTrackIcon(index: number) {
+		const track = [...(monsterFormData.corruption_reward_track ?? [])];
+		if (index < 0 || index >= track.length) return;
+		track.splice(index, 1);
+		monsterFormData.corruption_reward_track = track;
+	}
+
+	function clearCorruptionRewardTrack() {
+		monsterFormData.corruption_reward_track = [];
 	}
 
 	function getInlineStats(monster: Monster): InlineStats {
@@ -564,6 +601,7 @@
 				barrier: 0,
 				card_image_path: null,
 				reward_track: [],
+				corruption_reward_track: normalizeRewardTrack(defaultCorruptionRewardTrack),
 				stage: 'stage_1',
 				monster_classification: 'monster',
 			icon: null,
@@ -575,7 +613,8 @@
 		attack_type: 'damage',
 		stage_num: 1,
 		quantity: 1,
-		choose_amount: 1
+		choose_amount: 1,
+		corruption_choose_amount: 2
 	});
 
 	let eventFormData = $state<EventFormData>({
@@ -610,6 +649,7 @@
 						barrier: 0,
 						card_image_path: null,
 						reward_track: [],
+						corruption_reward_track: normalizeRewardTrack(defaultCorruptionRewardTrack),
 						stage: 'stage_1',
 						monster_classification: 'monster',
 					icon: null,
@@ -621,7 +661,8 @@
 			attack_type: 'damage',
 			stage_num: 1,
 			quantity: 1,
-			choose_amount: 1
+			choose_amount: 1,
+			corruption_choose_amount: 2
 		};
 		onSelectMonster?.(null);
 		editorOpen = true;
@@ -918,7 +959,12 @@
 						__save_source: 'editor',
 						damage: coerceNonNegativeInt(monsterFormData.damage, 0),
 						barrier: barrierValue,
-						reward_track: normalizeRewardTrack(monsterFormData.reward_track)
+						reward_track: normalizeRewardTrack(monsterFormData.reward_track),
+						corruption_reward_track: normalizeRewardTrack(monsterFormData.corruption_reward_track),
+						corruption_choose_amount: coerceNonNegativeInt(
+							monsterFormData.corruption_choose_amount,
+							2
+						)
 					};
 				const id = await onMonsterSave(sanitized, editingId);
 				if (!editingId && !deckOrder.some((k) => k.type === 'monster' && k.id === id)) {
@@ -1840,7 +1886,100 @@
 								</div>
 							</div>
 
-							<FormField label="Choose Amount" helperText="0 = hidden on card">
+							{@const corruptionRewardIcons = monsterFormData.corruption_reward_track ?? []}
+							<div class="full-width reward-track-editor">
+								<div class="reward-track-editor__header">
+									<div>
+										<div class="reward-track-editor__title">On-Corruption Rewards</div>
+										<div class="reward-track-editor__description">
+											Awarded to the player when this monster corrupts them.
+										</div>
+									</div>
+									<div class="reward-track-editor__hint">{corruptionRewardIcons.length}/6 slots</div>
+								</div>
+
+								<div class="reward-track-editor__slots">
+									{#each corruptionRewardIcons as iconId, idx (`corruption:${iconId}:${idx}`)}
+										{@const url = getIconPoolUrl(iconId)}
+										<div class="reward-track-slot reward-track-slot--inline">
+											<div class="reward-track-slot__icons">
+												{#if url}
+													<img src={url} alt="" loading="lazy" decoding="async" />
+												{:else}
+													<span class="reward-track-slot__placeholder">?</span>
+												{/if}
+											</div>
+											<div class="reward-track-slot__actions">
+												<button
+													type="button"
+													class="mini-btn"
+													onclick={() => moveCorruptionRewardTrackIcon(idx, idx - 1)}
+													disabled={idx === 0}
+												>
+													↑
+												</button>
+												<button
+													type="button"
+													class="mini-btn"
+													onclick={() => moveCorruptionRewardTrackIcon(idx, idx + 1)}
+													disabled={idx === corruptionRewardIcons.length - 1}
+												>
+													↓
+												</button>
+												<button
+													type="button"
+													class="mini-btn mini-btn--danger"
+													onclick={() => removeCorruptionRewardTrackIcon(idx)}
+												>
+													✕
+												</button>
+											</div>
+										</div>
+									{/each}
+									{#if corruptionRewardIcons.length === 0}
+										<div class="reward-track-editor__empty">No on-corruption rewards.</div>
+									{/if}
+								</div>
+
+								<div class="reward-track-editor__picker">
+									<div class="reward-track-editor__picker-header">
+										<span>Edit On-Corruption Rewards</span>
+										<div class="reward-track-editor__picker-actions">
+											<Button
+												variant="secondary"
+												size="sm"
+												onclick={() => (corruptionRewardTrackPickerOpen = !corruptionRewardTrackPickerOpen)}
+											>
+												{corruptionRewardTrackPickerOpen ? 'Hide picker' : 'Show picker'}
+											</Button>
+											<Button
+												variant="danger"
+												size="sm"
+												onclick={clearCorruptionRewardTrack}
+												disabled={corruptionRewardIcons.length === 0}
+											>
+												Clear all
+											</Button>
+										</div>
+									</div>
+
+							{#if corruptionRewardTrackPickerOpen}
+										<IconPicker
+											selected={corruptionRewardIcons}
+											onselect={(ids) => setCorruptionRewardTrack(ids)}
+											multiple={true}
+											maxSelection={6}
+											allowDuplicates={true}
+										/>
+								{/if}
+							</div>
+
+							<FormField label="On-Corruption Choose Amount" helperText="Player must choose this many rewards">
+								<Input type="number" min={0} max={6} bind:value={monsterFormData.corruption_choose_amount} />
+							</FormField>
+						</div>
+
+						<FormField label="On-Kill Choose Amount" helperText="0 = hidden on card">
 								<Input type="number" min={0} bind:value={monsterFormData.choose_amount} />
 							</FormField>
 						{/if}
@@ -2576,6 +2715,12 @@
 			font-size: 0.8rem;
 			font-weight: 700;
 			color: #e2e8f0;
+		}
+
+		.reward-track-editor__description {
+			margin-top: 0.2rem;
+			font-size: 0.7rem;
+			color: #94a3b8;
 		}
 
 		.reward-track-editor__hint {

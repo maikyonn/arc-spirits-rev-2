@@ -269,6 +269,9 @@ export type MonsterRow = {
 	barrier: number;
 	/** Flat array of up to 6 icon IDs awarded on kill. */
 	reward_track: string[];
+	/** Flat array of up to 6 icon IDs awarded when this monster corrupts a player. */
+	corruption_reward_track?: string[];
+	corruption_choose_amount?: number;
 	stage: 'stage_1' | 'stage_2' | 'stage_3' | 'final_stage' | 'inactive';
 	monster_classification: 'monster' | 'abyss_guardian' | 'boss' | 'final_boss';
 	icon: string | null;
@@ -509,6 +512,8 @@ export type MonsterV2Row = {
 	barrier: number;
 	stage: number;
 	reward_track: string[];
+	corruption_reward_track: string[];
+	corruption_choose_amount: number;
 	order_num: number;
 	card_image_path: string | null;
 	card_image_path_translations?: Record<string, string> | null;

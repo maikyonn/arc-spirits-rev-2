@@ -4,14 +4,13 @@
 	import html2canvas from 'html2canvas';
 	import JSZip from 'jszip';
 	import type {
-		AwakenRuneToken,
 		ClassRow,
 		HexSpiritArtRawVariantRow,
 		HexSpiritRow,
 		OriginRow,
 		MatItemRow
 	} from '$lib/types/gameData';
-	import { isAwakenOrRuneToken, awakenRuneTokensSlotsUsed } from '$lib/utils/awakenRuneTokens';
+	import { isAwakenOrRuneToken } from '$lib/utils/awakenRuneTokens';
 	import {
 		deleteHexSpiritRecord,
 		emptyHexSpiritForm,
@@ -50,6 +49,7 @@
 	import { processAndUploadImage } from '$lib/utils/storage';
 	import IconPlacementConfigurator from '$lib/components/spirits/IconPlacementConfigurator.svelte';
 	import BackIconPlacementConfigurator from '$lib/components/spirits/BackIconPlacementConfigurator.svelte';
+	import AwakenConditionEditor from '$lib/components/spirits/AwakenConditionEditor.svelte';
 	import {
 		FRAME_TIERS,
 		type FrameTier,
@@ -557,90 +557,6 @@
 			traits: { ...modal.formData.traits, class_ids: expanded },
 			class_id: expanded[0] ?? null
 		};
-	}
-
-	function getAwakenRuneTokens(): AwakenRuneToken[] {
-		const ac = modal.formData.awaken_condition;
-		if (ac?.type === 'rune_cost') return ac.rune_ids ?? [];
-		return [];
-	}
-
-	function updateRuneCostQuantity(runeId: string, quantity: number) {
-		const qty = Math.max(0, Math.floor(Number.isFinite(quantity) ? quantity : 0));
-		const tokens = getAwakenRuneTokens();
-		// Only modify plain string tokens; preserve OR tokens
-		const orTokens = tokens.filter((t) => isAwakenOrRuneToken(t));
-		const plainTokens = tokens.filter((t): t is string => typeof t === 'string');
-		const filtered = plainTokens.filter((id) => id !== runeId);
-		const expanded = filtered.concat(Array(qty).fill(runeId));
-		const newTokens: AwakenRuneToken[] = [...expanded, ...orTokens];
-		modal.formData = {
-			...modal.formData,
-			awaken_condition: newTokens.length > 0
-				? { type: 'rune_cost' as const, rune_ids: newTokens }
-				: null
-		};
-	}
-
-	function countRuneOccurrences(runeId: string): number {
-		return getAwakenRuneTokens().filter((t): t is string => typeof t === 'string' && t === runeId).length;
-	}
-
-	function addAwakenOrSlot() {
-		const tokens = getAwakenRuneTokens();
-		if (awakenRuneTokensSlotsUsed(tokens) >= 5) return;
-		const newTokens: AwakenRuneToken[] = [...tokens, { kind: 'or', rune_ids: [] }];
-		modal.formData = {
-			...modal.formData,
-			awaken_condition: { type: 'rune_cost' as const, rune_ids: newTokens }
-		};
-	}
-
-	function updateOrSlotRune(tokenIndex: number, runeId: string, add: boolean) {
-		const tokens = [...getAwakenRuneTokens()];
-		const token = tokens[tokenIndex];
-		if (!token || !isAwakenOrRuneToken(token)) return;
-		const ids = [...(token.rune_ids ?? [])];
-		if (add && !ids.includes(runeId)) {
-			ids.push(runeId);
-		} else if (!add) {
-			const idx = ids.indexOf(runeId);
-			if (idx >= 0) ids.splice(idx, 1);
-		}
-		tokens[tokenIndex] = { kind: 'or', rune_ids: ids };
-		modal.formData = {
-			...modal.formData,
-			awaken_condition: { type: 'rune_cost' as const, rune_ids: tokens }
-		};
-	}
-
-	function removeAwakenToken(tokenIndex: number) {
-		const tokens = getAwakenRuneTokens().filter((_, i) => i !== tokenIndex);
-		modal.formData = {
-			...modal.formData,
-			awaken_condition: tokens.length > 0
-				? { type: 'rune_cost' as const, rune_ids: tokens }
-				: null
-		};
-	}
-
-	function getAwakenConditionType(): 'none' | 'rune_cost' | 'text' {
-		if (!modal.formData.awaken_condition) return 'none';
-		return modal.formData.awaken_condition.type;
-	}
-
-	function setAwakenConditionType(type: 'none' | 'rune_cost' | 'text') {
-		if (type === 'none') {
-			modal.formData = { ...modal.formData, awaken_condition: null };
-		} else if (type === 'rune_cost') {
-			modal.formData = { ...modal.formData, awaken_condition: { type: 'rune_cost', rune_ids: [] } };
-		} else {
-			modal.formData = { ...modal.formData, awaken_condition: { type: 'text', text: '' } };
-		}
-	}
-
-	function updateAwakenText(text: string) {
-		modal.formData = { ...modal.formData, awaken_condition: { type: 'text', text } };
 	}
 
 	function handleTabChange(tabId: string) {
@@ -3005,79 +2921,7 @@
 		</div>
 		<div class="trait-picker trait-picker--runes">
 			<div class="trait-picker__header">Awaken Condition</div>
-			<div class="awaken-type-selector">
-				<select
-					value={getAwakenConditionType()}
-					onchange={(e) => setAwakenConditionType((e.currentTarget as HTMLSelectElement).value as 'none' | 'rune_cost' | 'text')}
-				>
-					<option value="none">None</option>
-					<option value="rune_cost">Rune Cost</option>
-					<option value="text">Text</option>
-				</select>
-			</div>
-
-			{#if modal.formData.awaken_condition?.type === 'rune_cost'}
-				{@const tokens = getAwakenRuneTokens()}
-				{@const slotsUsed = awakenRuneTokensSlotsUsed(tokens)}
-				<div class="awaken-slots-indicator">Slots: {slotsUsed} / 5</div>
-				<div class="trait-grid">
-					{#each runes as rune}
-						<div class="trait-card trait-card--rune">
-							<div class="trait-card__name">{rune.name}</div>
-							<input
-								type="number"
-								min="0"
-								value={countRuneOccurrences(rune.id)}
-								oninput={(e) =>
-									updateRuneCostQuantity(rune.id, Number((e.currentTarget as HTMLInputElement).value))}
-							/>
-						</div>
-					{/each}
-				</div>
-				<div class="or-slots-section">
-					<div class="or-slots-header">
-						<span>OR Slots</span>
-						<button
-							class="btn btn--sm btn--outline"
-							disabled={slotsUsed >= 5}
-							onclick={() => addAwakenOrSlot()}
-						>+ OR Slot</button>
-					</div>
-					{#each tokens as token, tokenIndex}
-						{#if isAwakenOrRuneToken(token)}
-							<div class="or-slot-card">
-								<div class="or-slot-card__header">
-									<span>OR Slot #{tokenIndex + 1}</span>
-									<button
-										class="btn btn--sm btn--danger"
-										onclick={() => removeAwakenToken(tokenIndex)}
-									>&times;</button>
-								</div>
-								<div class="or-slot-card__runes">
-									{#each runes as rune}
-										<label class="or-slot-rune-checkbox">
-											<input
-												type="checkbox"
-												checked={token.rune_ids?.includes(rune.id) ?? false}
-												onchange={(e) => updateOrSlotRune(tokenIndex, rune.id, (e.currentTarget as HTMLInputElement).checked)}
-											/>
-											{rune.name}
-										</label>
-									{/each}
-								</div>
-							</div>
-						{/if}
-					{/each}
-				</div>
-			{:else if modal.formData.awaken_condition?.type === 'text'}
-				<textarea
-					class="awaken-text-input"
-					value={modal.formData.awaken_condition.text}
-					oninput={(e) => updateAwakenText((e.currentTarget as HTMLTextAreaElement).value)}
-					placeholder="Enter awaken condition text..."
-					rows="3"
-				></textarea>
-			{/if}
+			<AwakenConditionEditor bind:value={modal.formData.awaken_condition} {runes} />
 		</div>
 		<label class="span-full">
 			PSD folder override (optional)
@@ -3444,95 +3288,6 @@
 
 	.trait-picker--runes .trait-picker__header {
 		color: #d8b4fe;
-	}
-
-	.trait-card--rune {
-		background: rgba(168, 85, 247, 0.15);
-		border-color: rgba(168, 85, 247, 0.25);
-	}
-
-	.trait-card--rune .trait-card__name {
-		color: #e9d5ff;
-	}
-
-	.awaken-type-selector {
-		margin-bottom: 0.35rem;
-	}
-
-	.awaken-type-selector select {
-		padding: 0.35rem 0.5rem;
-		background: rgba(15, 23, 42, 0.6);
-		border: 1px solid rgba(148, 163, 184, 0.2);
-		color: #e2e8f0;
-		font-size: 0.8rem;
-		border-radius: 6px;
-	}
-
-	.awaken-text-input {
-		width: 100%;
-		padding: 0.45rem 0.5rem;
-		background: rgba(15, 23, 42, 0.6);
-		border: 1px solid rgba(168, 85, 247, 0.25);
-		color: #e2e8f0;
-		font-size: 0.8rem;
-		border-radius: 6px;
-		resize: vertical;
-		font-family: inherit;
-	}
-
-	.awaken-slots-indicator {
-		font-size: 0.75rem;
-		color: #c4b5fd;
-		margin-bottom: 0.35rem;
-	}
-
-	.or-slots-section {
-		margin-top: 0.5rem;
-	}
-
-	.or-slots-header {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		margin-bottom: 0.35rem;
-		font-size: 0.8rem;
-		color: #d8b4fe;
-	}
-
-	.or-slot-card {
-		background: rgba(168, 85, 247, 0.1);
-		border: 1px solid rgba(168, 85, 247, 0.2);
-		border-radius: 6px;
-		padding: 0.4rem;
-		margin-bottom: 0.35rem;
-	}
-
-	.or-slot-card__header {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		margin-bottom: 0.25rem;
-		font-size: 0.75rem;
-		color: #c4b5fd;
-	}
-
-	.or-slot-card__runes {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 0.25rem 0.5rem;
-	}
-
-	.or-slot-rune-checkbox {
-		display: flex;
-		align-items: center;
-		gap: 0.25rem;
-		font-size: 0.75rem;
-		color: #e2e8f0;
-		cursor: pointer;
-	}
-
-	.or-slot-rune-checkbox input[type="checkbox"] {
-		accent-color: #a855f7;
 	}
 
 	.modal-footer-actions {

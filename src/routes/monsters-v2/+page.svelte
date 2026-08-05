@@ -50,6 +50,8 @@
 	let exportingZip = $state(false);
 	let layoutPlacerOpen = $state(false);
 	let baseTemplatePath = $state<string | null>(null);
+	let brokenBarrierIconId = $state<string | null>(null);
+	let arcaneAbyssSummonIconId = $state<string | null>(null);
 
 	const TEMPLATE_SETTINGS_KEY = 'monsters_v2_base_template';
 
@@ -120,7 +122,15 @@
 		loading = true;
 		error = null;
 		try {
-			await Promise.all([loadIconPool(), loadBaseTemplate()]);
+			const [icons] = await Promise.all([loadIconPool(), loadBaseTemplate()]);
+			brokenBarrierIconId =
+				icons.find((icon) => icon.id === '80f1d5a8-812e-4bb2-b341-68e69d9a3e38')?.id ??
+				icons.find((icon) => icon.name.toLowerCase() === 'broken_barrier')?.id ??
+				null;
+			arcaneAbyssSummonIconId =
+				icons.find((icon) => icon.id === '12ff8ffe-20cb-4a86-a493-5e4ff8b9dc3e')?.id ??
+				icons.find((icon) => icon.name === 'Arcane Abyss Summon')?.id ??
+				null;
 			await loadMonsters();
 		} catch (err) {
 			error = getErrorMessage(err);
@@ -213,6 +223,7 @@
 				'Barrier',
 				'DicePool',
 				'RewardTrack',
+				'CorruptionRewardTrack',
 				'OrderNum'
 			]
 		];
@@ -229,6 +240,9 @@
 				monster.barrier ?? 0,
 				attackType === 'dice_pool' ? JSON.stringify(m.dice_pool ?? []) : '',
 				JSON.stringify(m.reward_track ?? []),
+				JSON.stringify(
+					(monster as unknown as { corruption_reward_track?: string[] }).corruption_reward_track ?? []
+				),
 				monster.order_num ?? 0
 			].map(csvEscape));
 		}
@@ -323,6 +337,9 @@
 
 		const barrierValue = Math.max(0, Math.trunc(Number(formData.barrier ?? 0)));
 		const reward_track = normalizeRewardTrack((formData as unknown as { reward_track?: unknown }).reward_track);
+		const corruption_reward_track = normalizeRewardTrack(
+			(formData as unknown as { corruption_reward_track?: unknown }).corruption_reward_track
+		);
 		const attack_type: 'damage' | 'dice_pool' = ((formData as unknown as { attack_type?: string }).attack_type === 'dice_pool') ? 'dice_pool' : 'damage';
 		const dice_pool: string[] = attack_type === 'dice_pool'
 			? (Array.isArray((formData as unknown as { dice_pool?: unknown }).dice_pool)
@@ -332,6 +349,18 @@
 		const damage = attack_type === 'damage' ? formData.damage : 0;
 		const stage = Math.max(1, Math.trunc(Number((formData as unknown as { stage_num?: number }).stage_num ?? 1)));
 		const choose_amount = Math.max(0, Math.trunc(Number((formData as unknown as { choose_amount?: number }).choose_amount ?? 0)));
+		const corruption_choose_amount = Math.min(
+			6,
+			Math.max(
+				0,
+				Math.trunc(
+					Number(
+						(formData as unknown as { corruption_choose_amount?: number })
+							.corruption_choose_amount ?? 2
+					)
+				)
+			)
+		);
 		const now = new Date().toISOString();
 
 		let monsterId: string;
@@ -346,6 +375,8 @@
 					stage,
 					card_image_path: formData.card_image_path ?? null,
 					reward_track,
+					corruption_reward_track,
+					corruption_choose_amount,
 					dice_pool,
 					choose_amount,
 					order_num: Math.max(0, Math.trunc(Number(formData.order_num ?? 0))),
@@ -364,6 +395,8 @@
 				stage,
 				card_image_path: formData.card_image_path ?? null,
 				reward_track,
+				corruption_reward_track,
+				corruption_choose_amount,
 				dice_pool,
 				choose_amount,
 				order_num: nextOrderNum,
@@ -505,6 +538,9 @@
 			showSpecialEffects={false}
 			showAttackTypeToggle={true}
 			showStageAsInteger={true}
+			defaultCorruptionRewardTrack={brokenBarrierIconId && arcaneAbyssSummonIconId
+				? [brokenBarrierIconId, brokenBarrierIconId, arcaneAbyssSummonIconId]
+				: []}
 		/>
 	{:else if activeTab === 'gallery'}
 		<div class="gallery-container">
